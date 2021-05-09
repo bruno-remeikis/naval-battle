@@ -1,0 +1,806 @@
+#include <iostream>
+#include <locale>    // <- Change language
+//#include <conio.h>
+#include <windows.h> // <- Redimention window
+#include <conio2.h>  // <- Use gotoxy and colors
+#include <cstdlib>   // <- Use random
+#include <list>		 // <- Use list
+#include <vector>	 // <- Use vector
+#include <iterator>  // <- Manipulate list
+#include <ctime>	 // <- Use time in random numbers
+//#include <typeinfo>
+
+#define KEY_UP 72
+#define KEY_DOWN 80
+#define KEY_RIGHT 77
+#define KEY_LEFT 75
+#define KEY_ENTER 13
+
+#define QTD_SUBMARINO 3
+#define QTD_ENCOURACADO 2
+#define QTD_CRUZADOR 3
+#define QTD_HIDROAVIAO 4
+#define QTD_PORTA_AVIOES 1
+
+#define GAME_WIDTH 20
+#define GAME_HEIGHT 15
+
+using namespace std;
+
+// CLASSES
+
+class Coordenada;
+class Tipo;
+class Embarcacao;
+class Peca;
+
+// Coordenada
+class Coordenada
+{
+	private:
+		int x, y;
+		
+	public:
+		Coordenada() {}
+		
+		Coordenada(int x, int y)
+		{
+			this->x = x;
+			this->y = y;
+		}
+		
+		int getX()
+		{
+			return x;
+		}
+		
+		void setX(int x)
+		{
+			this->x = x;
+		}
+		
+		int getY()
+		{
+			return y;
+		}
+		
+		void setY(int y)
+		{
+			this->y = y;
+		}
+};
+
+// Tipo
+class Tipo
+{
+	private:
+		int qtd;
+		int size;
+		char character;
+		COLORS color;
+	public:
+		Tipo(int qtd, int size, char character, COLORS color)
+		{
+			this->qtd = qtd;
+			this->size = size;
+			this->character = character;
+			this->color = color;
+		}
+		
+		int getQtd()
+		{
+			return qtd;
+		}
+		
+		int getSize()
+		{
+			return size;
+		}
+		
+		char getCharacter()
+		{
+			return character;
+		}
+		
+		COLORS getColor()
+		{
+			return color;
+		}
+};
+
+// Embarcação
+class Embarcacao
+{
+	private:
+		Tipo *tipo;
+		Peca **pecas; // <- Array of pointers
+	public:
+		Embarcacao(Tipo *tipo)
+		{
+			this->tipo = tipo;
+		}
+		
+		Tipo* getTipo()
+		{
+			return tipo;
+		}
+		
+		Peca** getPecas()
+		{
+			return pecas;
+		}
+		
+		void setPecas(Peca **pecas)
+		{
+			this->pecas = pecas;
+		}
+};
+
+// Peça
+class Peca
+{
+	private:
+		Embarcacao *embarcacao = nullptr;
+		bool revealed = false;
+	public:
+		Embarcacao* getEmbarcacao()
+		{
+			return embarcacao;
+		}
+		
+		void setEmbarcacao(Embarcacao *embarcacao)
+		{
+			this->embarcacao = embarcacao;
+		}
+		
+		bool isRevealed()
+		{
+			return revealed;
+		}
+		
+		void reveal()
+		{
+			revealed = true;
+		}
+		
+		bool isWater()
+		{
+			return embarcacao == nullptr;
+		}
+};
+
+
+
+
+
+// VARIÁVEIS GLOBAIS
+
+// Tipos pré-definidos
+Tipo SUBMARINO   (QTD_SUBMARINO   , 1, '1', LIGHTCYAN);
+Tipo ENCOURACADO (QTD_ENCOURACADO , 2, '2', GREEN    );
+Tipo CRUZADOR    (QTD_CRUZADOR    , 3, '3', DARKGRAY );
+Tipo HIDROAVIAO  (QTD_HIDROAVIAO  , 1, '4', LIGHTRED );
+Tipo PORTA_AVIOES(QTD_PORTA_AVIOES, 4, '5', YELLOW   );
+
+// Matriz do jogo
+Peca field[GAME_WIDTH][GAME_HEIGHT];
+
+
+
+
+
+// FUNCTIONS
+
+// Coloca o cursor em [1; 1]
+void hideCursor()
+{
+	gotoxy(1, 1);
+}
+
+// Interrompe o sistema até que a key passada seja pressionada
+void waitKey(int key)
+{
+	char input;
+	
+	do
+	{
+		input = getch();
+	}
+	while(input != key);
+}
+
+// Gerar embarcação
+void gerarEmbarcacoes(Tipo *tipoAtual)
+{
+	textcolor(WHITE);
+	cout << " \n\n Tipo: " << tipoAtual->getCharacter();
+
+	//cout << (*tipoAtual).getCharacter() << " ";
+	//Tipo *tipoAtual = tipos
+	
+	for(int qtd = 0; qtd < tipoAtual->getQtd(); qtd++)
+	{
+		// Posicionar embarcação
+		bool sortingCoord = true;
+		while(sortingCoord)
+		{
+			// Sortear coordenada inicial
+			int x, y;
+			while(true)
+			{
+				x = rand() % GAME_WIDTH;
+				y = rand() % GAME_HEIGHT;
+				
+				if(field[x][y].isWater())
+					break;
+			}
+			
+			// Coordenadas
+			Coordenada coords[tipoAtual->getSize()];
+			coords[0].setX(x);
+			coords[0].setY(y);
+			
+			//list<Coordenada> coords = { Coordenada(x, y) };
+			
+			// Direções disponíveis
+			list<int> directions = { 0, 1, 2, 3 };
+			
+			// Direcionar embarcação
+			bool directing = true;
+			while(directing)
+			{
+				//cout << "\n Gerando coordenadas";
+				
+				// Se não existirem mais direções disponíveis, volta e pega novas coordenadas
+				if(directions.empty())
+					break;
+				
+				// Sorteia uma direção
+				int iDir = rand() % directions.size();
+				
+				// Pega a direção sorteada
+				list<int>::iterator dir = directions.begin();
+				advance(dir, iDir);
+				
+				// Apaga a direção
+				directions.erase(dir);
+				
+				/*
+				directions.remove(iDir);
+				
+				// Pega a direção sorteada
+				auto listItem = directions.begin();
+				advance(listItem, iDir);
+				*/
+				
+				//cout << "\n Direção: " << *dir;
+				
+				// Salvar coordenadas (caso válidas)
+				bool freeWay = true;
+				switch(*dir /**listItem*/)
+				{
+					// Up
+					case 0:
+						for(int d = 1; d < tipoAtual->getSize(); d++)
+							if(field[x][y - d].isWater() && y - d >= 0)
+							{
+								//coords.push_back(Coordenada(x, y - dY));
+								coords[d].setX(x);
+								coords[d].setY(y - d);
+							}
+							else
+							{
+								freeWay = false;
+								break;
+							}
+						break;
+					// Down
+					case 1:
+						for(int d = 1; d < tipoAtual->getSize(); d++)
+							if(field[x][y + d].isWater() && y + d <= GAME_HEIGHT - 1)
+							{
+								//coords.push_back(Coordenada(x, y + d));
+								coords[d].setX(x);
+								coords[d].setY(y + d);
+							}
+							else
+							{
+								freeWay = false;
+								break;
+							}
+						break;
+					// Right
+					case 2:
+						for(int d = 1; d < tipoAtual->getSize(); d++)
+							if(field[x + d][y].isWater() && x + d <= GAME_WIDTH - 1)
+							{
+								//coords.push_back(Coordenada(x + d, y));
+								coords[d].setX(x + d);
+								coords[d].setY(y);
+							}
+							else
+							{
+								freeWay = false;
+								break;
+							}
+						break;
+					// Left
+					case 3:
+						for(int d = 1; d < tipoAtual->getSize(); d++)
+							if(field[x - d][y].isWater() && x - d >= 0)
+							{
+								//coords.push_back(Coordenada(x - d, y));
+								coords[d].setX(x - d);
+								coords[d].setY(y);
+							}
+							else
+							{
+								freeWay = false;
+								break;
+							}
+						break;
+				}
+				
+				// Sair dos loops e passar para próxima embarcação
+				if(freeWay)
+				{
+					Embarcacao *e = new Embarcacao(tipoAtual);
+					Peca *pecas[tipoAtual->getSize()];
+					
+					for(int iC = 0; iC < sizeof(coords) / sizeof(*coords); iC++)
+					{
+						int i = coords[iC].getX();
+						int j = coords[iC].getY();
+						
+						field[i][j].setEmbarcacao(e);
+						
+						textcolor(field[i][j].getEmbarcacao()->getTipo()->getColor());
+						cout << field[i][j].getEmbarcacao()->getTipo()->getCharacter();
+						
+						pecas[iC] = &field[i][j];
+					}
+					
+					//e->setPecas(pecas);
+					
+					directing = false;
+					sortingCoord = false;
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+// INTERFACE FUNCTIONS
+
+// Jogo
+void game()
+{
+	// Gerar embarcações
+	gerarEmbarcacoes(&SUBMARINO);
+	gerarEmbarcacoes(&ENCOURACADO);
+	gerarEmbarcacoes(&CRUZADOR);
+	gerarEmbarcacoes(&HIDROAVIAO);
+	gerarEmbarcacoes(&PORTA_AVIOES);
+	
+	// PRINTAR CAMPO (Revelar tudo)
+	cout << "\n";
+	for(int j = 0; j < GAME_HEIGHT; j++)
+	{
+		cout << "\n";
+		
+		for(int i = 0; i < GAME_WIDTH; i++)
+		{
+			//Peca *peca = &field[i][j];
+			
+			if(field[i][j].isWater()) //peca->
+			{
+				textcolor(LIGHTBLUE);
+				cout << " 0";
+			}
+			else
+			{
+				//Tipo t = peca->getEmbarcacao().getTipo();
+				//textcolor(t.getColor());
+				//cout << " " << t.getCharacter();
+				
+				cout << "\n\n Peca: " << field[i][j].getEmbarcacao();//->getTipo();//->getCharacter();
+				
+				//textcolor(LIGHTMAGENTA);
+				//cout << " ?";
+				
+				getch();
+				
+				//textcolor(field[i][j].getEmbarcacao().getTipo().getColor());
+				//cout << " " << field[i][j].getEmbarcacao().getTipo().getCharacter();
+			}
+		}
+	}
+	cout << "\n\n";
+	
+	//while(true) {}
+	
+	
+	// PRINTAR CAMPO
+	textcolor(WHITE);
+	cout << " ------------------------------------------------------------------- \n";
+	cout << " |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 | \n";
+	cout << " ----+-------------------------------------------------------------- \n";
+	
+	const int
+		absoluteX = 9,
+		absoluteY = wherey();
+	
+	textcolor(WHITE);
+	for(int j = 0; j < GAME_HEIGHT; j++)
+	{
+		cout << " | " << char(j + 65) << " |";
+		
+		for(int i = 0; i < GAME_WIDTH; i++)
+			cout << "  -";
+		
+		cout << " |\n";
+	}
+	
+	cout << " -------------------------------------------------------------------";
+	//cout << " |___|_____________________________________________________________|";
+	
+	// MOVIMENTO DO CURSOR
+	int x = 0;
+	int y = 0;
+	bool revealing = false;
+	bool clearRelealed = false;
+	
+	while(true)
+	{
+		// Printar posição atual
+		if(!revealing)
+		{
+			textcolor(LIGHTMAGENTA);
+			gotoxy(
+				absoluteX + x * 3,
+				absoluteY + y
+			);
+			cout << "X";
+		}
+		else
+		{
+			revealing = false;
+			clearRelealed = true;
+		}
+		
+		hideCursor();
+		
+		// Deslocamento (-1 || 0 || 1)
+		int dX = 0;
+		int dY = 0;
+		
+		switch(getch())
+		{
+			// Up
+			case KEY_UP:
+				dY = -1;
+				break;
+			// Down
+			case KEY_DOWN:
+				dY = 1;
+				break;
+			// Right
+			case KEY_RIGHT:
+				dX = 1;
+				break;
+			// Left
+			case KEY_LEFT:
+				dX = -1;
+				break;
+			// Enter
+			case KEY_ENTER:
+				if(!field[x][y].isRevealed())
+				{
+					revealing = true;
+					
+					gotoxy(
+						absoluteX + x * 3 - 1,
+						absoluteY + y
+					);
+					
+					textcolor(LIGHTMAGENTA);
+					cout << ">";
+					
+					// Revelar peça
+					field[x][y].reveal();
+					
+					// Printar peça revelada
+					if(field[x][y].isWater())
+					{
+						textcolor(LIGHTBLUE);
+						cout << "0";
+					}
+					else
+					{
+						Tipo *t = field[x][y].getEmbarcacao()->getTipo();
+						textcolor(t->getColor());
+						cout << t->getCharacter();
+					}
+					
+					textcolor(LIGHTMAGENTA);
+					cout << "<";
+				}
+				break;
+		}
+		
+		// X em movimento
+		if(!revealing)
+		{
+			// Limpar X da posição anterior
+			if(!clearRelealed)
+			{
+				gotoxy(
+					absoluteX + x * 3,
+					absoluteY + y
+				);
+				
+				if(!field[x][y].isRevealed())
+				{
+					textcolor(WHITE);
+					cout << "-";
+				}
+				else
+					if(field[x][y].isWater())
+					{
+						textcolor(LIGHTBLUE);
+						cout << "0";
+					}
+					else
+					{
+						Tipo *t = field[x][y].getEmbarcacao()->getTipo();
+						textcolor(t->getColor());
+						cout << t->getCharacter();
+					}
+			}
+			// Limpas marcador de tiro ">" e "<" (caso estejam aparecendo (clearRelealed))
+			else
+			{
+				clearRelealed = false;
+				
+				gotoxy(
+					absoluteX + x * 3 - 1,
+					absoluteY + y
+				);
+				cout << " ";
+				
+				gotoxy(
+					absoluteX + x * 3 + 1,
+					absoluteY + y
+				);
+				cout << " ";
+			}
+			
+			// Atualizar posição
+			x += dX;
+			y += dY;
+			
+			// Ajustar caso saia da área da matriz
+			if(x < 0)
+				x = GAME_WIDTH - 1;
+			else if(x > GAME_WIDTH - 1)
+				x = 0;
+				
+			if(y < 0)
+				y = GAME_HEIGHT - 1;
+			else if(y > GAME_HEIGHT - 1)
+				y = 0;
+		}
+	}
+}
+
+// Instruções
+void instructions()
+{
+	textcolor(LIGHTMAGENTA);
+	cout << "\n\n\t\t\t\t   INSTRUÇÕES \n\n\n";
+	
+	string margin = "\t   ";
+	textcolor(WHITE);
+	cout << margin << "Utilize as setas do teclado ou as teclas ";
+	textcolor(LIGHTMAGENTA);
+	cout << "W";
+	textcolor(WHITE);
+	cout << ", ";
+	textcolor(LIGHTMAGENTA);
+	cout << "A";
+	textcolor(WHITE);
+	cout << ", ";
+	textcolor(LIGHTMAGENTA);
+	cout << "S";
+	textcolor(WHITE);
+	cout << " e ";
+	textcolor(LIGHTMAGENTA);
+	cout << "D";
+	textcolor(WHITE);
+	cout << " para \n";
+	cout << margin << "controlar o ";
+	textcolor(LIGHTMAGENTA);
+	cout << "X";
+	textcolor(WHITE);
+	cout << " no campo da Batalha Naval. \n\n";
+	
+	cout << margin << "Aperte ";
+	textcolor(LIGHTMAGENTA);
+	cout << "Enter";
+	textcolor(WHITE);
+	cout << " quando quiser atirar no ponto marcado pelo ";
+	textcolor(LIGHTMAGENTA);
+	cout << "X";
+	textcolor(WHITE);
+	cout << ". \n\n";
+	
+	cout << margin << "O jogo começa com um total de tiros disponiveis definidos \n";
+	cout << margin << "pela dificuldade escolhida pelo jogador. A cada tiro dado \n";
+	cout << margin << "em uma coordenada diferente, sua quantidade de tiros dis- \n";
+	cout << margin << "poníveis diminui. \n\n";
+	
+	cout << margin << "O jogador vence quando todos os barcos e navios são afun- \n";
+	cout << margin << "dados por  completo antes  que seus  tiros acabem e perde \n";
+	cout << margin << "quando esta condição não é atendida. \n\n";
+	
+	cout << margin << "O ganhador tem sua posição no ranking relativa ao modo de \n";
+	cout << margin << "jogo escolhido no início e à quantidade gasta de tiros.";
+	
+	textcolor(LIGHTMAGENTA);
+	cout << "\n\n\n\n\t\t\t ...";
+	textcolor(WHITE);
+	cout << " APERTE ENTER PARA SAIR ";
+	textcolor(LIGHTMAGENTA);
+	cout << "... \n";
+	
+	hideCursor();
+	waitKey(KEY_ENTER);
+}
+
+// Ranking
+void ranking()
+{
+	
+}
+
+
+
+
+
+// MAIN
+int main()
+{
+	// CONFIGS
+	setlocale(LC_ALL, ""); // <- Habilita caracterer especiais
+	
+	system("mode 80, 85"); // <- Tamanho da tela
+	
+	srand((unsigned) time(0)); // <- Possibilita geração de números pseudo-randômicos diferentes a cada execução
+	
+	// Variables
+	int opt = 0;
+	
+	// Main loop
+	while(true)
+	{
+		system("cls");
+	
+		// MAIN MENÚ
+		string margin = "\t\t ";
+		textcolor(LIGHTGRAY);
+		cout << "\n\n\n";
+		cout << margin << " ____  ____  ______  ____  _     _    _  ____   \n";
+		cout << margin << "|°   ||/   ||__  __||°   ||/|   | |__| ||   °|  \n";
+		cout << margin << "| __/ |/__ |  |  |  | __ ||/|   |° __ °|| __ |  \n";
+		cout << margin << "|   \\ |/|| |  |  |  | || ||/|__ | |  | || || | \n";
+		cout << margin << "|°___||/||_|  |__|  |_||_||/___||_|  |_||_||_|  \n";
+		
+		textcolor(LIGHTBLUE);
+		cout << margin << "//////////////////////////////////////////////  \n";
+		
+		margin = "\t\t\t";
+		textcolor(LIGHTGRAY);
+		cout << margin << " ___  _	 ____  _  _  ____  _      \n";
+		cout << margin << "|°  \\| ||   °||/|| ||°   || |	  \n";
+		cout << margin << "|°|\\   || __ ||/|| || __ || |	  \n";
+		cout << margin << "|°| \\  || || ||/\\/ || || || |__  \n";
+		cout << margin << "|°|  \\_||_||°| \\__/ |_||_||____| \n";
+		
+		textcolor(LIGHTBLUE);
+		cout << margin << "////////////////////////////////   \n";
+		
+		margin = "\t\t\t  ";
+		textcolor(WHITE);
+		cout << "\n\n\n\n";
+		cout << margin << "----------------------------- \n";
+		cout << margin << "|      ";
+		textcolor(LIGHTMAGENTA);
+		cout << "MENU PRINCIPAL";
+		textcolor(WHITE);
+		cout << "       | \n";
+		cout << margin << "----------------------------- \n";
+		cout << margin << "|   NOVO JOGO               | \n";
+		cout << margin << "|   INSTRUÇÕES DO JOGO      | \n";
+		cout << margin << "|   RANKING                 | \n";
+		cout << margin << "|   SAIR                    | \n";
+		cout << margin << "----------------------------- \n";
+		
+		// MENU OPTIONS
+		bool choosing = true;
+		
+		const int initX = 29;
+		const int initY = 23;
+		
+		textcolor(LIGHTMAGENTA);
+		
+		do
+		{
+			gotoxy(initX, initY + opt);
+			cout << ">";
+			hideCursor();
+			
+			int arrowDir = 0;
+			
+			switch(getch())
+			{
+				// Up
+				case KEY_UP:
+				    if(opt > 0)
+				    	arrowDir = -1;
+				    break;
+				// Down
+				case KEY_DOWN:
+				    if(opt < 3)
+				    	arrowDir = 1;
+				    break;
+				// Enter
+				case KEY_ENTER:
+				    choosing = false;
+				    break;
+			}
+			
+			gotoxy(initX, initY + opt);
+			cout << " ";
+			
+			opt += arrowDir;
+		}
+		while(choosing);
+		
+		system("cls");
+		
+		/*// !!! TESTE !!! //
+		Peca peca[GAME_WIDTH][GAME_HEIGHT] = new Peca*[GAME_WIDTH];
+		for(Peca *p: peca)
+			p = new Peca[GAME_HEIGHT];
+		
+		if(peca[0][0].isWater())
+			cout << "\n\n\n Né água n \n\n\n";*/
+		
+		// MENU REDIRECT
+		switch(opt)
+		{
+			// New game
+			case 0:
+				game();
+				break;
+			// Instructions
+			case 1:
+				instructions();
+				break;
+			// Ranking
+			case 2:
+				ranking();
+				break;
+			// Exit
+			case 3:
+				return 0;
+				break;
+		}
+	}
+	
+	return 0;
+}
