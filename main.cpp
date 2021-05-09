@@ -1,6 +1,5 @@
 #include <iostream>
 #include <locale>    // <- Change language
-//#include <conio.h>
 #include <windows.h> // <- Redimention window
 #include <conio2.h>  // <- Use gotoxy and colors
 #include <cstdlib>   // <- Use random
@@ -212,12 +211,6 @@ void waitKey(int key)
 // Gerar embarcação
 void gerarEmbarcacoes(Tipo *tipoAtual)
 {
-	textcolor(WHITE);
-	cout << " \n\n Tipo: " << tipoAtual->getCharacter();
-
-	//cout << (*tipoAtual).getCharacter() << " ";
-	//Tipo *tipoAtual = tipos
-	
 	for(int qtd = 0; qtd < tipoAtual->getQtd(); qtd++)
 	{
 		// Posicionar embarcação
@@ -240,8 +233,6 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 			coords[0].setX(x);
 			coords[0].setY(y);
 			
-			//list<Coordenada> coords = { Coordenada(x, y) };
-			
 			// Direções disponíveis
 			list<int> directions = { 0, 1, 2, 3 };
 			
@@ -249,8 +240,6 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 			bool directing = true;
 			while(directing)
 			{
-				//cout << "\n Gerando coordenadas";
-				
 				// Se não existirem mais direções disponíveis, volta e pega novas coordenadas
 				if(directions.empty())
 					break;
@@ -265,26 +254,15 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 				// Apaga a direção
 				directions.erase(dir);
 				
-				/*
-				directions.remove(iDir);
-				
-				// Pega a direção sorteada
-				auto listItem = directions.begin();
-				advance(listItem, iDir);
-				*/
-				
-				//cout << "\n Direção: " << *dir;
-				
 				// Salvar coordenadas (caso válidas)
 				bool freeWay = true;
-				switch(*dir /**listItem*/)
+				switch(*dir)
 				{
 					// Up
 					case 0:
 						for(int d = 1; d < tipoAtual->getSize(); d++)
 							if(field[x][y - d].isWater() && y - d >= 0)
 							{
-								//coords.push_back(Coordenada(x, y - dY));
 								coords[d].setX(x);
 								coords[d].setY(y - d);
 							}
@@ -299,7 +277,6 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 						for(int d = 1; d < tipoAtual->getSize(); d++)
 							if(field[x][y + d].isWater() && y + d <= GAME_HEIGHT - 1)
 							{
-								//coords.push_back(Coordenada(x, y + d));
 								coords[d].setX(x);
 								coords[d].setY(y + d);
 							}
@@ -314,7 +291,6 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 						for(int d = 1; d < tipoAtual->getSize(); d++)
 							if(field[x + d][y].isWater() && x + d <= GAME_WIDTH - 1)
 							{
-								//coords.push_back(Coordenada(x + d, y));
 								coords[d].setX(x + d);
 								coords[d].setY(y);
 							}
@@ -329,7 +305,6 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 						for(int d = 1; d < tipoAtual->getSize(); d++)
 							if(field[x - d][y].isWater() && x - d >= 0)
 							{
-								//coords.push_back(Coordenada(x - d, y));
 								coords[d].setX(x - d);
 								coords[d].setY(y);
 							}
@@ -354,13 +329,10 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 						
 						field[i][j].setEmbarcacao(e);
 						
-						textcolor(field[i][j].getEmbarcacao()->getTipo()->getColor());
-						cout << field[i][j].getEmbarcacao()->getTipo()->getCharacter();
-						
 						pecas[iC] = &field[i][j];
 					}
 					
-					//e->setPecas(pecas);
+					e->setPecas(pecas);
 					
 					directing = false;
 					sortingCoord = false;
@@ -387,35 +359,23 @@ void game()
 	gerarEmbarcacoes(&PORTA_AVIOES);
 	
 	// PRINTAR CAMPO (Revelar tudo)
-	cout << "\n";
 	for(int j = 0; j < GAME_HEIGHT; j++)
 	{
 		cout << "\n";
 		
 		for(int i = 0; i < GAME_WIDTH; i++)
 		{
-			//Peca *peca = &field[i][j];
+			Peca *peca = &field[i][j];
 			
-			if(field[i][j].isWater()) //peca->
+			if(peca->isWater())
 			{
 				textcolor(LIGHTBLUE);
 				cout << " 0";
 			}
 			else
 			{
-				//Tipo t = peca->getEmbarcacao().getTipo();
-				//textcolor(t.getColor());
-				//cout << " " << t.getCharacter();
-				
-				cout << "\n\n Peca: " << field[i][j].getEmbarcacao();//->getTipo();//->getCharacter();
-				
-				//textcolor(LIGHTMAGENTA);
-				//cout << " ?";
-				
-				getch();
-				
-				//textcolor(field[i][j].getEmbarcacao().getTipo().getColor());
-				//cout << " " << field[i][j].getEmbarcacao().getTipo().getCharacter();
+				textcolor(peca->getEmbarcacao()->getTipo()->getColor());
+				cout << " " << peca->getEmbarcacao()->getTipo()->getCharacter();
 			}
 		}
 	}
@@ -446,7 +406,6 @@ void game()
 	}
 	
 	cout << " -------------------------------------------------------------------";
-	//cout << " |___|_____________________________________________________________|";
 	
 	// MOVIMENTO DO CURSOR
 	int x = 0;
@@ -771,14 +730,6 @@ int main()
 		while(choosing);
 		
 		system("cls");
-		
-		/*// !!! TESTE !!! //
-		Peca peca[GAME_WIDTH][GAME_HEIGHT] = new Peca*[GAME_WIDTH];
-		for(Peca *p: peca)
-			p = new Peca[GAME_HEIGHT];
-		
-		if(peca[0][0].isWater())
-			cout << "\n\n\n Né água n \n\n\n";*/
 		
 		// MENU REDIRECT
 		switch(opt)
