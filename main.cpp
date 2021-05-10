@@ -1,4 +1,6 @@
-#include <iostream>
+// LIBRARIES
+
+#include <iostream>  // <- Input and output
 #include <locale>    // <- Change language
 #include <windows.h> // <- Redimention window
 #include <conio2.h>  // <- Use gotoxy and colors
@@ -7,7 +9,12 @@
 #include <vector>	 // <- Use vector
 #include <iterator>  // <- Manipulate list
 #include <ctime>	 // <- Use time in random numbers
-//#include <typeinfo>
+
+// FILES
+
+#include "classes.cpp"
+
+// CONSTANTS
 
 #define KEY_UP 72
 #define KEY_DOWN 80
@@ -15,158 +22,10 @@
 #define KEY_LEFT 75
 #define KEY_ENTER 13
 
-#define QTD_SUBMARINO 3
-#define QTD_ENCOURACADO 2
-#define QTD_CRUZADOR 3
-#define QTD_HIDROAVIAO 4
-#define QTD_PORTA_AVIOES 1
-
 #define GAME_WIDTH 20
 #define GAME_HEIGHT 15
 
 using namespace std;
-
-// CLASSES
-
-class Coordenada;
-class Tipo;
-class Embarcacao;
-class Peca;
-
-// Coordenada
-class Coordenada
-{
-	private:
-		int x, y;
-		
-	public:
-		Coordenada() {}
-		
-		Coordenada(int x, int y)
-		{
-			this->x = x;
-			this->y = y;
-		}
-		
-		int getX()
-		{
-			return x;
-		}
-		
-		void setX(int x)
-		{
-			this->x = x;
-		}
-		
-		int getY()
-		{
-			return y;
-		}
-		
-		void setY(int y)
-		{
-			this->y = y;
-		}
-};
-
-// Tipo
-class Tipo
-{
-	private:
-		int qtd;
-		int size;
-		char character;
-		COLORS color;
-	public:
-		Tipo(int qtd, int size, char character, COLORS color)
-		{
-			this->qtd = qtd;
-			this->size = size;
-			this->character = character;
-			this->color = color;
-		}
-		
-		int getQtd()
-		{
-			return qtd;
-		}
-		
-		int getSize()
-		{
-			return size;
-		}
-		
-		char getCharacter()
-		{
-			return character;
-		}
-		
-		COLORS getColor()
-		{
-			return color;
-		}
-};
-
-// Embarcação
-class Embarcacao
-{
-	private:
-		Tipo *tipo;
-		Peca **pecas; // <- Array of pointers
-	public:
-		Embarcacao(Tipo *tipo)
-		{
-			this->tipo = tipo;
-		}
-		
-		Tipo* getTipo()
-		{
-			return tipo;
-		}
-		
-		Peca** getPecas()
-		{
-			return pecas;
-		}
-		
-		void setPecas(Peca **pecas)
-		{
-			this->pecas = pecas;
-		}
-};
-
-// Peça
-class Peca
-{
-	private:
-		Embarcacao *embarcacao = nullptr;
-		bool revealed = false;
-	public:
-		Embarcacao* getEmbarcacao()
-		{
-			return embarcacao;
-		}
-		
-		void setEmbarcacao(Embarcacao *embarcacao)
-		{
-			this->embarcacao = embarcacao;
-		}
-		
-		bool isRevealed()
-		{
-			return revealed;
-		}
-		
-		void reveal()
-		{
-			revealed = true;
-		}
-		
-		bool isWater()
-		{
-			return embarcacao == nullptr;
-		}
-};
 
 
 
@@ -175,11 +34,13 @@ class Peca
 // VARIÁVEIS GLOBAIS
 
 // Tipos pré-definidos
-Tipo SUBMARINO   (QTD_SUBMARINO   , 1, '1', LIGHTCYAN);
-Tipo ENCOURACADO (QTD_ENCOURACADO , 2, '2', GREEN    );
-Tipo CRUZADOR    (QTD_CRUZADOR    , 3, '3', DARKGRAY );
-Tipo HIDROAVIAO  (QTD_HIDROAVIAO  , 1, '4', LIGHTRED );
-Tipo PORTA_AVIOES(QTD_PORTA_AVIOES, 4, '5', YELLOW   );
+Tipo *tipos[] = {
+	new Tipo("Submarino"   , 3, 1, '1', LIGHTCYAN),
+	new Tipo("Encouraçado" , 2, 2, '2', GREEN    ),
+	new Tipo("Cruzador"    , 3, 3, '3', DARKGRAY ),
+	new Tipo("Hidroavião"  , 4, 1, '4', LIGHTRED ),
+	new Tipo("Porta-aviões", 1, 4, '5', YELLOW   )
+};
 
 // Matriz do jogo
 Peca field[GAME_WIDTH][GAME_HEIGHT];
@@ -351,13 +212,13 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 // Jogo
 void game()
 {
-	// Gerar embarcações
-	gerarEmbarcacoes(&SUBMARINO);
-	gerarEmbarcacoes(&ENCOURACADO);
-	gerarEmbarcacoes(&CRUZADOR);
-	gerarEmbarcacoes(&HIDROAVIAO);
-	gerarEmbarcacoes(&PORTA_AVIOES);
+	int tiros = 100;
 	
+	// Gerar embarcações
+	for(Tipo *tipo: tipos)
+		gerarEmbarcacoes(tipo);
+	
+	/*
 	// PRINTAR CAMPO (Revelar tudo)
 	for(int j = 0; j < GAME_HEIGHT; j++)
 	{
@@ -380,15 +241,27 @@ void game()
 		}
 	}
 	cout << "\n\n";
+	*/
 	
-	//while(true) {}
-	
-	
-	// PRINTAR CAMPO
+	// PRINTAR
 	textcolor(WHITE);
-	cout << " ------------------------------------------------------------------- \n";
-	cout << " |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 | \n";
-	cout << " ----+-------------------------------------------------------------- \n";
+	
+	// Tiros restantes
+	cout << "\n ------------------------";
+	cout << "\n | Tiros restantes: ";
+	
+	const int
+		xTiros = wherex(),
+		yTiros = wherey();
+	
+	cout << tiros;
+	gotoxy(xTiros + 3, yTiros);
+	cout << " |\n ------------------------";
+	
+	// Campo
+	cout << "\n -------------------------------------------------------------------";
+	cout << "\n |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 |";
+	cout << "\n ----+-------------------------------------------------------------- \n";	
 	
 	const int
 		absoluteX = 9,
@@ -406,6 +279,45 @@ void game()
 	}
 	
 	cout << " -------------------------------------------------------------------";
+	
+	// Status do tiro
+	string left = "\n\t\t   ";
+	cout << left << "----------------------------";
+	cout << left << "|                          |";
+	cout << left << "---------------------------- \n";
+	
+	// Tabela de status
+	left = "\n    ";
+	cout << left << "=============================================================";
+	int xRightStatusTable = wherex() - 1;
+	cout << left << "| ";
+	
+	int xTamanho = wherex() + 22;
+	
+	textcolor(LIGHTBLUE);
+	cout << "0 - Água";
+	textcolor(WHITE);
+	gotoxy(xRightStatusTable, wherey());
+	cout << "|";
+	
+	cout << left << "|-----------------------------------------------------------|";
+	
+	for(Tipo *tipo: tipos)
+	{
+		textcolor(WHITE);
+		cout << left << "| ";
+		
+		textcolor(tipo->getColor());
+		cout << tipo->getCharacter() << " - " << tipo->getName();
+		gotoxy(xTamanho, wherey());
+		cout << " (tamanho " << tipo->getSize() << ")";
+		gotoxy(xRightStatusTable, wherey());
+		
+		textcolor(WHITE);
+		cout << "|";
+	}
+	
+	cout << left << "=============================================================";
 	
 	// MOVIMENTO DO CURSOR
 	int x = 0;
@@ -461,6 +373,15 @@ void game()
 				{
 					revealing = true;
 					
+					// Atualizar número de tiros
+					tiros--;
+					textcolor(WHITE);
+					gotoxy(xTiros, yTiros);
+					cout << "   "; // <- Limpar
+					gotoxy(xTiros, yTiros);
+					cout << tiros; // <- Atualizar
+					
+					// Atualizar campo
 					gotoxy(
 						absoluteX + x * 3 - 1,
 						absoluteY + y
