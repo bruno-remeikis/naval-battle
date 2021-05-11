@@ -1,13 +1,23 @@
+//#include <iostream>
 #include <conio2.h>  // <- Use gotoxy and colors
+
+/*
+#include <iostream>  // <- Input and output
+#include <locale>    // <- Change language
+#include <windows.h> // <- Redimention window
+#include <conio2.h>  // <- Use gotoxy and colors
+#include <cstdlib>   // <- Use random
+#include <list>		 // <- Use list
+#include <vector>	 // <- Use vector
+#include <iterator>  // <- Manipulate list
+#include <ctime>	 // <- Use time in random numbers
+*/
 
 using namespace std;
 
 // CLASSES
 
-class Coordenada;
-class Tipo;
 class Embarcacao;
-class Peca;
 
 // Coordenada
 class Coordenada
@@ -54,6 +64,9 @@ class Tipo
 		int size;
 		char character;
 		COLORS color;
+		
+		int qtdAfundados = 0;
+		
 	public:
 		Tipo(string name, int qtd, int size, char character, COLORS color)
 		{
@@ -88,33 +101,15 @@ class Tipo
 		{
 			return color;
 		}
-};
-
-// Embarcação
-class Embarcacao
-{
-	private:
-		Tipo *tipo;
-		Peca **pecas; // <- Array of pointers
-	public:
-		Embarcacao(Tipo *tipo)
+		
+		int getQtdAfundados()
 		{
-			this->tipo = tipo;
+			return qtdAfundados;
 		}
 		
-		Tipo* getTipo()
+		void incrementarQtdAfundados()
 		{
-			return tipo;
-		}
-		
-		Peca** getPecas()
-		{
-			return pecas;
-		}
-		
-		void setPecas(Peca **pecas)
-		{
-			this->pecas = pecas;
+			qtdAfundados++;
 		}
 };
 
@@ -122,7 +117,7 @@ class Embarcacao
 class Peca
 {
 	private:
-		Embarcacao *embarcacao = nullptr;
+		Embarcacao* embarcacao = nullptr;
 		bool revealed = false;
 	public:
 		Embarcacao* getEmbarcacao()
@@ -130,7 +125,7 @@ class Peca
 			return embarcacao;
 		}
 		
-		void setEmbarcacao(Embarcacao *embarcacao)
+		void setEmbarcacao(Embarcacao* embarcacao)
 		{
 			this->embarcacao = embarcacao;
 		}
@@ -148,5 +143,43 @@ class Peca
 		bool isWater()
 		{
 			return embarcacao == nullptr;
+		}
+};
+
+// Embarcação
+class Embarcacao
+{
+	private:
+		Tipo* tipo;
+		list<Peca*> pecas;
+	public:
+		Embarcacao(Tipo* tipo)
+		{
+			this->tipo = tipo;
+		}
+		
+		Tipo* getTipo()
+		{
+			return tipo;
+		}
+		
+		list<Peca*> getPecas()
+		{
+			return pecas;
+		}
+		
+		void setPecas(list<Peca*> pecas)
+		{		
+			this->pecas = pecas;
+		}
+		
+		// Retorna 'true' se todas as peças foram reveladas
+		bool isSunk()
+		{
+			for(Peca* p: pecas)
+				if(!p->isRevealed())
+					return false;
+					
+			return true;
 		}
 };

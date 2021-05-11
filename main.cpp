@@ -33,9 +33,13 @@ using namespace std;
 
 // VARIÁVEIS GLOBAIS
 
+// Água
+char AGUA_CHAR = '#';
+COLORS AGUA_COLOR = LIGHTBLUE;
+
 // Tipos pré-definidos
 Tipo *tipos[] = {
-	new Tipo("Submarino"   , 3, 1, '1', LIGHTCYAN),
+	new Tipo("Submarino"   , /*3*/ 20, 1, '1', LIGHTCYAN),
 	new Tipo("Encouraçado" , 2, 2, '2', GREEN    ),
 	new Tipo("Cruzador"    , 3, 3, '3', DARKGRAY ),
 	new Tipo("Hidroavião"  , 4, 1, '4', LIGHTRED ),
@@ -180,8 +184,9 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 				// Sair dos loops e passar para próxima embarcação
 				if(freeWay)
 				{
-					Embarcacao *e = new Embarcacao(tipoAtual);
-					Peca *pecas[tipoAtual->getSize()];
+					Embarcacao* e = new Embarcacao(tipoAtual);
+					//Peca* pecas[tipoAtual->getSize()];
+					list<Peca*> pecas;
 					
 					for(int iC = 0; iC < sizeof(coords) / sizeof(*coords); iC++)
 					{
@@ -190,7 +195,8 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 						
 						field[i][j].setEmbarcacao(e);
 						
-						pecas[iC] = &field[i][j];
+						//pecas[iC] = &field[i][j];
+						pecas.push_back(&field[i][j]);
 					}
 					
 					e->setPecas(pecas);
@@ -212,9 +218,10 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 // Jogo
 void game()
 {
+	// VARIÁVEIS
 	int tiros = 100;
 	
-	// Gerar embarcações
+	// GERAR EMBARCAÇÕES
 	for(Tipo *tipo: tipos)
 		gerarEmbarcacoes(tipo);
 	
@@ -230,8 +237,8 @@ void game()
 			
 			if(peca->isWater())
 			{
-				textcolor(LIGHTBLUE);
-				cout << " 0";
+				textcolor(AGUA_COLOR);
+				cout << " " << AGUA_CHAR;
 			}
 			else
 			{
@@ -243,10 +250,8 @@ void game()
 	cout << "\n\n";
 	*/
 	
-	// PRINTAR
+	// TIROS RESTANTES
 	textcolor(WHITE);
-	
-	// Tiros restantes
 	cout << "\n ------------------------";
 	cout << "\n | Tiros restantes: ";
 	
@@ -258,10 +263,10 @@ void game()
 	gotoxy(xTiros + 3, yTiros);
 	cout << " |\n ------------------------";
 	
-	// Campo
+	// CAMPO
 	cout << "\n -------------------------------------------------------------------";
 	cout << "\n |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 |";
-	cout << "\n ----+-------------------------------------------------------------- \n";	
+	cout << "\n ----+-------------------------------------------------------------- \n";
 	
 	const int
 		absoluteX = 9,
@@ -280,13 +285,19 @@ void game()
 	
 	cout << " -------------------------------------------------------------------";
 	
-	// Status do tiro
+	// STATUS DE TIRO
 	string left = "\n\t\t   ";
-	cout << left << "----------------------------";
-	cout << left << "|                          |";
-	cout << left << "---------------------------- \n";
+	cout << left;
+	int xLeftStatusTiro = wherex() + 1;
+	cout << "-----------------------------";
+	int xMeioStatusTiro = (xLeftStatusTiro + (wherex() - 1)) / 2;
+	string cleanStatusTiro = "                           ";
+	cout << left << "|" << cleanStatusTiro << "|";
+	int yStatusTiro = wherey();
+	cout << left << "----------------------------- \n";
 	
-	// Tabela de status
+	// TABELA DE STATUS
+	// Barra do topo
 	left = "\n    ";
 	cout << left << "=============================================================";
 	int xRightStatusTable = wherex() - 1;
@@ -294,14 +305,34 @@ void game()
 	
 	int xTamanho = wherex() + 22;
 	
-	textcolor(LIGHTBLUE);
-	cout << "0 - Água";
+	// Água
+	textcolor(AGUA_COLOR);
+	cout << AGUA_CHAR << " - Água";
+	
+	// Calcular posição de "?/? afundados"
+	string txtAfundados = " afundados ";
+	int xAfundados = xRightStatusTable;
+	int sizeMaiorQtd = 0;
+	for(Tipo *tipo: tipos)
+	{
+		int sizeQtd = to_string(tipo->getQtd()).size();
+		if(sizeQtd > sizeMaiorQtd)
+			sizeMaiorQtd = sizeQtd;
+			
+		int newXAfudados = xRightStatusTable - (sizeQtd * 2 + 1 + txtAfundados.size());
+		if(newXAfudados < xAfundados)
+			xAfundados = newXAfudados;
+	}
+	
+	// Fim da água
 	textcolor(WHITE);
 	gotoxy(xRightStatusTable, wherey());
 	cout << "|";
 	
 	cout << left << "|-----------------------------------------------------------|";
+	int yPrimeiroAfundados = wherey() + 1;
 	
+	// Tipos
 	for(Tipo *tipo: tipos)
 	{
 		textcolor(WHITE);
@@ -309,14 +340,21 @@ void game()
 		
 		textcolor(tipo->getColor());
 		cout << tipo->getCharacter() << " - " << tipo->getName();
+		
 		gotoxy(xTamanho, wherey());
 		cout << " (tamanho " << tipo->getSize() << ")";
-		gotoxy(xRightStatusTable, wherey());
 		
+		gotoxy(xAfundados + sizeMaiorQtd - 1, wherey());
+		cout << "0/" << tipo->getQtd();
+		gotoxy(xRightStatusTable - txtAfundados.size(), wherey());
+		cout << txtAfundados;
+		
+		gotoxy(xRightStatusTable, wherey());
 		textcolor(WHITE);
 		cout << "|";
 	}
 	
+	// Barra de baixo
 	cout << left << "=============================================================";
 	
 	// MOVIMENTO DO CURSOR
@@ -396,8 +434,8 @@ void game()
 					// Printar peça revelada
 					if(field[x][y].isWater())
 					{
-						textcolor(LIGHTBLUE);
-						cout << "0";
+						textcolor(AGUA_COLOR);
+						cout << AGUA_CHAR;
 					}
 					else
 					{
@@ -408,6 +446,53 @@ void game()
 					
 					textcolor(LIGHTMAGENTA);
 					cout << "<";
+					
+					// Atualiza status de tiro
+					string status;
+					if(field[x][y].isWater())
+					{
+						textcolor(AGUA_COLOR);
+						status = "Tiro ao mar";
+					}
+					else
+					{
+						if(!field[x][y].getEmbarcacao()->isSunk())
+						{
+							textcolor(WHITE);
+							status += "Embarcação atingida";
+						}
+						else
+						{
+							Tipo* tipo = field[x][y].getEmbarcacao()->getTipo();
+							
+							textcolor(tipo->getColor());
+							status += tipo->getName() + " afundado";
+							
+							// Atualiza número de atingidos
+							tipo->incrementarQtdAfundados();
+							
+							// Atualizar tabela de status
+							for(int iTipo = 0; iTipo < sizeof(tipos) / sizeof(*tipos); iTipo++)
+								if(tipos[iTipo] == tipo)
+								{
+									int qtd = tipo->getQtdAfundados();
+									gotoxy(
+										xAfundados + (sizeMaiorQtd - to_string(qtd).size()),
+										yPrimeiroAfundados + iTipo
+									);
+									cout << qtd;
+									break;
+								}
+						}
+					}
+					
+					gotoxy(xLeftStatusTiro, yStatusTiro);
+					cout << cleanStatusTiro; // <- Limpar
+					gotoxy(xMeioStatusTiro - status.size() / 2, yStatusTiro);
+					cout << status; // <- Exibir
+					
+					// Atualiza tabela de status
+					
 				}
 				break;
 		}
@@ -431,8 +516,8 @@ void game()
 				else
 					if(field[x][y].isWater())
 					{
-						textcolor(LIGHTBLUE);
-						cout << "0";
+						textcolor(AGUA_COLOR);
+						cout << AGUA_CHAR;
 					}
 					else
 					{
