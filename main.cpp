@@ -9,6 +9,7 @@
 #include <vector>	 // <- Use vector
 #include <iterator>  // <- Manipulate list
 #include <ctime>	 // <- Use time in random numbers
+#include <windows.h>
 
 // FILES
 
@@ -21,6 +22,7 @@
 #define KEY_RIGHT 77
 #define KEY_LEFT 75
 #define KEY_ENTER 13
+#define KEY_ESC 27
 
 #define GAME_WIDTH 20
 #define GAME_HEIGHT 15
@@ -33,13 +35,19 @@ using namespace std;
 
 // VARIÁVEIS GLOBAIS
 
+// Marcadores
+char const
+	CROSSHAIR 		  = 'x', // <- Mira
+	OPEN_SHOT_MARKER  = '>', // <- 
+	CLOSE_SHOT_MARKER = '<'; // <- 
+
 // Água
-char AGUA_CHAR = '#';
-COLORS AGUA_COLOR = LIGHTBLUE;
+char const AGUA_CHAR = '#';
+COLORS const AGUA_COLOR = LIGHTBLUE;
 
 // Tipos pré-definidos
 Tipo *tipos[] = {
-	new Tipo("Submarino"   , /*3*/ 20, 1, '1', LIGHTCYAN),
+	new Tipo("Submarino"   , 3, 1, '1', LIGHTCYAN),
 	new Tipo("Encouraçado" , 2, 2, '2', GREEN    ),
 	new Tipo("Cruzador"    , 3, 3, '3', DARKGRAY ),
 	new Tipo("Hidroavião"  , 4, 1, '4', LIGHTRED ),
@@ -49,11 +57,66 @@ Tipo *tipos[] = {
 // Matriz do jogo
 Peca field[GAME_WIDTH][GAME_HEIGHT];
 
+// Embarcações não afundadas
+list<Embarcacao*> shipsNotSunk;
+
+
+
+
+
+// ENUMS
+
+enum GameStatus
+{
+	VICTORY,
+	DEFEAT,
+	EXIT
+};
+
 
 
 
 
 // FUNCTIONS
+
+/*
+void gotoxy2(int x, int y)
+{
+	SetConsoleCursorPosition(
+		GetStdHandle(STD_OUTPUT_HANDLE),
+		(COORD) {x - 1, y - 1}
+	);
+}
+
+int wherex2()
+{
+    CONSOLE_SCREEN_BUFFER_INFO con;
+    HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+    if(hcon != INVALID_HANDLE_VALUE &&
+        GetConsoleScreenBufferInfo(hcon,&con)) 
+    {
+        return con.dwCursorPosition.X;
+    }
+    
+    return 0;
+}
+
+int wherey2()
+{
+	int pos[2];
+    CONSOLE_SCREEN_BUFFER_INFO con;
+    HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
+    
+    if(hcon != INVALID_HANDLE_VALUE &&
+    	GetConsoleScreenBufferInfo(hcon,&con)) 
+    {
+        return con.dwCursorPosition.Y;
+    }
+    
+    return 0;
+}
+*/
 
 // Coloca o cursor em [1; 1]
 void hideCursor()
@@ -200,6 +263,7 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 					}
 					
 					e->setPecas(pecas);
+					shipsNotSunk.push_back(e);
 					
 					directing = false;
 					sortingCoord = false;
@@ -216,10 +280,10 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 // INTERFACE FUNCTIONS
 
 // Jogo
-void game()
+GameStatus game()
 {
 	// VARIÁVEIS
-	int tiros = 100;
+	int tiros = 500;
 	
 	// GERAR EMBARCAÇÕES
 	for(Tipo *tipo: tipos)
@@ -357,6 +421,9 @@ void game()
 	// Barra de baixo
 	cout << left << "=============================================================";
 	
+	textcolor(DARKGRAY);
+	cout << "\n\n\t\t\tAperte ESC para sair";
+	
 	// MOVIMENTO DO CURSOR
 	int x = 0;
 	int y = 0;
@@ -368,12 +435,14 @@ void game()
 		// Printar posição atual
 		if(!revealing)
 		{
+			//cout << "y: " << absoluteY;
+			
 			textcolor(LIGHTMAGENTA);
 			gotoxy(
 				absoluteX + x * 3,
 				absoluteY + y
 			);
-			cout << "X";
+			cout << CROSSHAIR;
 		}
 		else
 		{
@@ -405,6 +474,9 @@ void game()
 			case KEY_LEFT:
 				dX = -1;
 				break;
+			case KEY_ESC:
+				return GameStatus::EXIT;
+				break;
 			// Enter
 			case KEY_ENTER:
 				if(!field[x][y].isRevealed())
@@ -413,6 +485,10 @@ void game()
 					
 					// Atualizar número de tiros
 					tiros--;
+					
+					if(tiros == 0)
+						return GameStatus::DEFEAT;
+					
 					textcolor(WHITE);
 					gotoxy(xTiros, yTiros);
 					cout << "   "; // <- Limpar
@@ -426,7 +502,7 @@ void game()
 					);
 					
 					textcolor(LIGHTMAGENTA);
-					cout << ">";
+					cout << OPEN_SHOT_MARKER;
 					
 					// Revelar peça
 					field[x][y].reveal();
@@ -445,7 +521,7 @@ void game()
 					}
 					
 					textcolor(LIGHTMAGENTA);
-					cout << "<";
+					cout << CLOSE_SHOT_MARKER;
 					
 					// Atualiza status de tiro
 					string status;
@@ -463,6 +539,19 @@ void game()
 						}
 						else
 						{
+							// Remove sink from list
+							for (list<Embarcacao*>::iterator it = shipsNotSunk.begin(); it != shipsNotSunk.end(); ++it)
+								if(*it == field[x][y].getEmbarcacao())
+								{
+									shipsNotSunk.erase(it);
+									break;
+								}
+								
+							// Check if the game is over
+							if(shipsNotSunk.empty())
+								return GameStatus::VICTORY;
+							
+							// Shot status
 							Tipo* tipo = field[x][y].getEmbarcacao()->getTipo();
 							
 							textcolor(tipo->getColor());
@@ -490,9 +579,6 @@ void game()
 					cout << cleanStatusTiro; // <- Limpar
 					gotoxy(xMeioStatusTiro - status.size() / 2, yStatusTiro);
 					cout << status; // <- Exibir
-					
-					// Atualiza tabela de status
-					
 				}
 				break;
 		}
@@ -560,6 +646,33 @@ void game()
 				y = 0;
 		}
 	}
+}
+
+// Troféu
+void victory()
+{
+	system("cls");
+	
+	string left = "\t\t\t  ";
+	cout << "\n\n\n";
+	
+	textcolor(YELLOW);
+	cout << left << "   _____________     \n";
+	cout << left << "  (_____________)    \n";
+	cout << left << "___|           |___  \n";
+	cout << left << "|  |           |  |  \n";
+	cout << left << "|  | PARABÉNS! |  |  \n";
+	cout << left << "|  |           |  |  \n";
+	cout << left << " \\__\\         /__/ \n";
+	cout << left << "     \\_______/      \n";
+	cout << left << "       (___)         \n";
+	cout << left << "        | |          \n";
+	cout << left << "        |_|          \n";
+	cout << left << "     __(___)__       \n";
+	cout << left << "     |///////|       \n";
+	cout << left << "     |_______|       \n";
+	
+	waitKey(KEY_ENTER);
 }
 
 // Instruções
@@ -648,6 +761,36 @@ int main()
 	
 	// Variables
 	int opt = 0;
+	
+	/*
+	float
+		A3  = 220,
+		Bb3 = 233.1,
+		
+		C4  = 261.6,
+		D4  = 293.7,
+		E4  = 329.6,
+		F4  = 349.2,
+		A4  = 440,
+		Bb4 = 466.2,
+		
+		C5 = 523.3,
+		D5 = 587.3,
+		E5 = 659.3,
+		F5 = 698.5;
+	
+	Beep(C4, 300);
+	Beep(F4, 1200);
+	Beep(E4, 300);
+	Beep(F4, 300);
+	Beep(E4, 800);
+	Beep(C4, 800);
+	Beep(A3, 800);
+	Beep(D4, 800);
+	Beep(A3, 800);
+	Beep(Bb3, 800);
+	Beep(C4, 800);
+	*/
 	
 	// Main loop
 	while(true)
@@ -742,7 +885,17 @@ int main()
 		{
 			// New game
 			case 0:
-				game();
+				switch(game())
+				{
+					case GameStatus::VICTORY:
+						victory();
+						break;
+						
+					case GameStatus::DEFEAT:
+						cout << "\n DERROTA";
+						waitKey(KEY_ENTER);
+						break;
+				}
 				break;
 			// Instructions
 			case 1:
