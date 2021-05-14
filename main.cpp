@@ -17,6 +17,8 @@
 
 // CONSTANTS
 
+#define WINDOW_WIDTH 80
+
 #define KEY_UP 72
 #define KEY_DOWN 80
 #define KEY_RIGHT 77
@@ -279,6 +281,84 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 
 // INTERFACE FUNCTIONS
 
+int menu(string title, vector<string> options, int opt)
+{
+	// CONSTRUIR MENÚ
+	int biggerTxt = title.size();
+	
+	for(string option: options)
+		if(option.size() + 4 > biggerTxt)
+			biggerTxt = option.size() + 4;
+			
+	string border = "----";
+	for(int i = 0; i < biggerTxt; i++)
+		border += "-";
+	border += "\n";
+	
+	// Top border
+	cout << border;
+	
+	// Title
+	cout << "|";
+	const int initX = wherex() + 1;
+	const int initY = wherey() + 2;
+	
+	textcolor(LIGHTMAGENTA);
+	cout << title;
+	gotoxy(biggerTxt + 4, wherey());
+	textcolor(WHITE);
+	cout << "|\n";
+	
+	cout << border;
+		
+	for(string option: options)
+	{
+		cout << "|   " << option;
+		gotoxy(biggerTxt + 4, wherey());
+		cout << "|\n";
+	}
+	
+	cout << border;
+	
+	// MOVIMENTAR CURSOR
+	textcolor(LIGHTMAGENTA);
+	bool choosing = true;
+	do
+	{
+		gotoxy(initX, initY + opt);
+		cout << ">";
+		hideCursor();
+		
+		int arrowDir = 0;
+		
+		switch(getch())
+		{
+			// Up
+			case KEY_UP:
+			    if(opt > 0)
+			    	arrowDir = -1;
+			    break;
+			// Down
+			case KEY_DOWN:
+			    if(opt < 3)
+			    	arrowDir = 1;
+			    break;
+			// Enter
+			case KEY_ENTER:
+			    choosing = false;
+			    break;
+		}
+		
+		gotoxy(initX, initY + opt);
+		cout << " ";
+		
+		opt += arrowDir;
+	}
+	while(choosing);
+	
+	return opt;
+}
+
 // Jogo
 GameStatus game()
 {
@@ -289,361 +369,404 @@ GameStatus game()
 	for(Tipo *tipo: tipos)
 		gerarEmbarcacoes(tipo);
 	
-	/*
-	// PRINTAR CAMPO (Revelar tudo)
-	for(int j = 0; j < GAME_HEIGHT; j++)
-	{
-		cout << "\n";
-		
-		for(int i = 0; i < GAME_WIDTH; i++)
-		{
-			Peca *peca = &field[i][j];
-			
-			if(peca->isWater())
-			{
-				textcolor(AGUA_COLOR);
-				cout << " " << AGUA_CHAR;
-			}
-			else
-			{
-				textcolor(peca->getEmbarcacao()->getTipo()->getColor());
-				cout << " " << peca->getEmbarcacao()->getTipo()->getCharacter();
-			}
-		}
-	}
-	cout << "\n\n";
-	*/
-	
-	// TIROS RESTANTES
-	textcolor(WHITE);
-	cout << "\n ------------------------";
-	cout << "\n | Tiros restantes: ";
-	
-	const int
-		xTiros = wherex(),
-		yTiros = wherey();
-	
-	cout << tiros;
-	gotoxy(xTiros + 3, yTiros);
-	cout << " |\n ------------------------";
-	
-	// CAMPO
-	cout << "\n -------------------------------------------------------------------";
-	cout << "\n |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 |";
-	cout << "\n ----+-------------------------------------------------------------- \n";
-	
-	const int
-		absoluteX = 9,
-		absoluteY = wherey();
-	
-	textcolor(WHITE);
-	for(int j = 0; j < GAME_HEIGHT; j++)
-	{
-		cout << " | " << char(j + 65) << " |";
-		
-		for(int i = 0; i < GAME_WIDTH; i++)
-			cout << "  -";
-		
-		cout << " |\n";
-	}
-	
-	cout << " -------------------------------------------------------------------";
-	
-	// STATUS DE TIRO
-	string left = "\n\t\t   ";
-	cout << left;
-	int xLeftStatusTiro = wherex() + 1;
-	cout << "-----------------------------";
-	int xMeioStatusTiro = (xLeftStatusTiro + (wherex() - 1)) / 2;
-	string cleanStatusTiro = "                           ";
-	cout << left << "|" << cleanStatusTiro << "|";
-	int yStatusTiro = wherey();
-	cout << left << "----------------------------- \n";
-	
-	// TABELA DE STATUS
-	// Barra do topo
-	left = "\n    ";
-	cout << left << "=============================================================";
-	int xRightStatusTable = wherex() - 1;
-	cout << left << "| ";
-	
-	int xTamanho = wherex() + 22;
-	
-	// Água
-	textcolor(AGUA_COLOR);
-	cout << AGUA_CHAR << " - Água";
-	
-	// Calcular posição de "?/? afundados"
-	string txtAfundados = " afundados ";
-	int xAfundados = xRightStatusTable;
-	int sizeMaiorQtd = 0;
-	for(Tipo *tipo: tipos)
-	{
-		int sizeQtd = to_string(tipo->getQtd()).size();
-		if(sizeQtd > sizeMaiorQtd)
-			sizeMaiorQtd = sizeQtd;
-			
-		int newXAfudados = xRightStatusTable - (sizeQtd * 2 + 1 + txtAfundados.size());
-		if(newXAfudados < xAfundados)
-			xAfundados = newXAfudados;
-	}
-	
-	// Fim da água
-	textcolor(WHITE);
-	gotoxy(xRightStatusTable, wherey());
-	cout << "|";
-	
-	cout << left << "|-----------------------------------------------------------|";
-	int yPrimeiroAfundados = wherey() + 1;
-	
-	// Tipos
-	for(Tipo *tipo: tipos)
-	{
-		textcolor(WHITE);
-		cout << left << "| ";
-		
-		textcolor(tipo->getColor());
-		cout << tipo->getCharacter() << " - " << tipo->getName();
-		
-		gotoxy(xTamanho, wherey());
-		cout << " (tamanho " << tipo->getSize() << ")";
-		
-		gotoxy(xAfundados + sizeMaiorQtd - 1, wherey());
-		cout << "0/" << tipo->getQtd();
-		gotoxy(xRightStatusTable - txtAfundados.size(), wherey());
-		cout << txtAfundados;
-		
-		gotoxy(xRightStatusTable, wherey());
-		textcolor(WHITE);
-		cout << "|";
-	}
-	
-	// Barra de baixo
-	cout << left << "=============================================================";
-	
-	textcolor(DARKGRAY);
-	cout << "\n\n\t\t\tAperte ESC para sair";
-	
-	// MOVIMENTO DO CURSOR
+	// Variáveis para movimento do cursor
 	int x = 0;
 	int y = 0;
 	bool revealing = false;
 	bool clearRelealed = false;
 	
+	// Loop: permite reprintar os elementos visuais
 	while(true)
 	{
-		// Printar posição atual
-		if(!revealing)
+		system("cls");
+		
+		/*
+		// PRINTAR CAMPO (Revelar tudo)
+		for(int j = 0; j < GAME_HEIGHT; j++)
 		{
-			//cout << "y: " << absoluteY;
+			cout << "\n";
 			
-			textcolor(LIGHTMAGENTA);
-			gotoxy(
-				absoluteX + x * 3,
-				absoluteY + y
-			);
-			cout << CROSSHAIR;
-		}
-		else
-		{
-			revealing = false;
-			clearRelealed = true;
-		}
-		
-		hideCursor();
-		
-		// Deslocamento (-1 || 0 || 1)
-		int dX = 0;
-		int dY = 0;
-		
-		switch(getch())
-		{
-			// Up
-			case KEY_UP:
-				dY = -1;
-				break;
-			// Down
-			case KEY_DOWN:
-				dY = 1;
-				break;
-			// Right
-			case KEY_RIGHT:
-				dX = 1;
-				break;
-			// Left
-			case KEY_LEFT:
-				dX = -1;
-				break;
-			case KEY_ESC:
-				return GameStatus::EXIT;
-				break;
-			// Enter
-			case KEY_ENTER:
-				if(!field[x][y].isRevealed())
-				{
-					revealing = true;
-					
-					// Atualizar número de tiros
-					tiros--;
-					
-					if(tiros == 0)
-						return GameStatus::DEFEAT;
-					
-					textcolor(WHITE);
-					gotoxy(xTiros, yTiros);
-					cout << "   "; // <- Limpar
-					gotoxy(xTiros, yTiros);
-					cout << tiros; // <- Atualizar
-					
-					// Atualizar campo
-					gotoxy(
-						absoluteX + x * 3 - 1,
-						absoluteY + y
-					);
-					
-					textcolor(LIGHTMAGENTA);
-					cout << OPEN_SHOT_MARKER;
-					
-					// Revelar peça
-					field[x][y].reveal();
-					
-					// Printar peça revelada
-					if(field[x][y].isWater())
-					{
-						textcolor(AGUA_COLOR);
-						cout << AGUA_CHAR;
-					}
-					else
-					{
-						Tipo *t = field[x][y].getEmbarcacao()->getTipo();
-						textcolor(t->getColor());
-						cout << t->getCharacter();
-					}
-					
-					textcolor(LIGHTMAGENTA);
-					cout << CLOSE_SHOT_MARKER;
-					
-					// Atualiza status de tiro
-					string status;
-					if(field[x][y].isWater())
-					{
-						textcolor(AGUA_COLOR);
-						status = "Tiro ao mar";
-					}
-					else
-					{
-						if(!field[x][y].getEmbarcacao()->isSunk())
-						{
-							textcolor(WHITE);
-							status += "Embarcação atingida";
-						}
-						else
-						{
-							// Remove sink from list
-							for (list<Embarcacao*>::iterator it = shipsNotSunk.begin(); it != shipsNotSunk.end(); ++it)
-								if(*it == field[x][y].getEmbarcacao())
-								{
-									shipsNotSunk.erase(it);
-									break;
-								}
-								
-							// Check if the game is over
-							if(shipsNotSunk.empty())
-								return GameStatus::VICTORY;
-							
-							// Shot status
-							Tipo* tipo = field[x][y].getEmbarcacao()->getTipo();
-							
-							textcolor(tipo->getColor());
-							status += tipo->getName() + " afundado";
-							
-							// Atualiza número de atingidos
-							tipo->incrementarQtdAfundados();
-							
-							// Atualizar tabela de status
-							for(int iTipo = 0; iTipo < sizeof(tipos) / sizeof(*tipos); iTipo++)
-								if(tipos[iTipo] == tipo)
-								{
-									int qtd = tipo->getQtdAfundados();
-									gotoxy(
-										xAfundados + (sizeMaiorQtd - to_string(qtd).size()),
-										yPrimeiroAfundados + iTipo
-									);
-									cout << qtd;
-									break;
-								}
-						}
-					}
-					
-					gotoxy(xLeftStatusTiro, yStatusTiro);
-					cout << cleanStatusTiro; // <- Limpar
-					gotoxy(xMeioStatusTiro - status.size() / 2, yStatusTiro);
-					cout << status; // <- Exibir
-				}
-				break;
-		}
-		
-		// X em movimento
-		if(!revealing)
-		{
-			// Limpar X da posição anterior
-			if(!clearRelealed)
+			for(int i = 0; i < GAME_WIDTH; i++)
 			{
+				Peca *peca = &field[i][j];
+				
+				if(peca->isWater())
+				{
+					textcolor(AGUA_COLOR);
+					cout << " " << AGUA_CHAR;
+				}
+				else
+				{
+					textcolor(peca->getEmbarcacao()->getTipo()->getColor());
+					cout << " " << peca->getEmbarcacao()->getTipo()->getCharacter();
+				}
+			}
+		}
+		cout << "\n\n";
+		*/
+		
+		// TIROS RESTANTES
+		textcolor(WHITE);
+		cout << "\n ------------------------";
+		cout << "\n | Tiros restantes: ";
+		
+		const int
+			xTiros = wherex(),
+			yTiros = wherey();
+		
+		cout << tiros;
+		gotoxy(xTiros + 3, yTiros);
+		cout << " |\n ------------------------";
+		
+		// CAMPO
+		cout << "\n -------------------------------------------------------------------";
+		cout << "\n |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 |";
+		cout << "\n ----+-------------------------------------------------------------- \n";
+		
+		const int
+			absoluteX = 9,
+			absoluteY = wherey();
+		
+		//textcolor(WHITE);
+		for(int j = 0; j < GAME_HEIGHT; j++)
+		{
+			textcolor(WHITE);
+			cout << " | " << char(j + 65) << " |";
+			
+			for(int i = 0; i < GAME_WIDTH; i++)
+			{
+				textcolor(WHITE);
+				cout << "  ";
+				
+				if(!field[i][j].isRevealed())
+				{
+					cout << "-";
+				}
+				else if(field[i][j].isWater())
+				{
+					textcolor(AGUA_COLOR);
+					cout << AGUA_CHAR;
+				}
+				else
+				{
+					Tipo *t = field[i][j].getEmbarcacao()->getTipo();
+					textcolor(t->getColor());
+					cout << t->getCharacter();
+				}
+			}
+			
+			textcolor(WHITE);
+			cout << " |\n";
+		}
+		
+		cout << " -------------------------------------------------------------------";
+		
+		// STATUS DE TIRO
+		string left = "\n\t\t   ";
+		cout << left;
+		int xLeftStatusTiro = wherex() + 1;
+		cout << "-----------------------------";
+		int xMeioStatusTiro = (xLeftStatusTiro + (wherex() - 1)) / 2;
+		string cleanStatusTiro = "                           ";
+		cout << left << "|" << cleanStatusTiro << "|";
+		int yStatusTiro = wherey();
+		cout << left << "----------------------------- \n";
+		
+		// TABELA DE STATUS
+		// Barra do topo
+		left = "\n    ";
+		cout << left << "=============================================================";
+		int xRightStatusTable = wherex() - 1;
+		cout << left << "| ";
+		
+		int xTamanho = wherex() + 22;
+		
+		// Água
+		textcolor(AGUA_COLOR);
+		cout << AGUA_CHAR << " - Água";
+		
+		// Calcular posição de "?/? afundados"
+		string txtAfundados = " afundados ";
+		int xAfundados = xRightStatusTable;
+		int sizeMaiorQtd = 0;
+		for(Tipo *tipo: tipos)
+		{
+			int sizeQtd = to_string(tipo->getQtd()).size();
+			if(sizeQtd > sizeMaiorQtd)
+				sizeMaiorQtd = sizeQtd;
+				
+			int newXAfudados = xRightStatusTable - (sizeQtd * 2 + 1 + txtAfundados.size());
+			if(newXAfudados < xAfundados)
+				xAfundados = newXAfudados;
+		}
+		
+		// Fim da água
+		textcolor(WHITE);
+		gotoxy(xRightStatusTable, wherey());
+		cout << "|";
+		
+		cout << left << "|-----------------------------------------------------------|";
+		int yPrimeiroAfundados = wherey() + 1;
+		
+		// Tipos
+		for(Tipo *tipo: tipos)
+		{
+			textcolor(WHITE);
+			cout << left << "| ";
+			
+			textcolor(tipo->getColor());
+			cout << tipo->getCharacter() << " - " << tipo->getName();
+			
+			gotoxy(xTamanho, wherey());
+			cout << " (tamanho " << tipo->getSize() << ")";
+			
+			gotoxy(xAfundados + sizeMaiorQtd - 1, wherey());
+			cout << "0/" << tipo->getQtd();
+			gotoxy(xRightStatusTable - txtAfundados.size(), wherey());
+			cout << txtAfundados;
+			
+			gotoxy(xRightStatusTable, wherey());
+			textcolor(WHITE);
+			cout << "|";
+		}
+		
+		// Barra de baixo
+		cout << left << "=============================================================";
+		
+		textcolor(DARKGRAY);
+		cout << "\n\n\t\t\tAperte ESC para sair";
+		
+		// MOVIMENTO DO CURSOR
+		
+		bool movingCursor = true;
+		while(movingCursor)
+		{
+			// Printar posição atual
+			if(!revealing)
+			{
+				//cout << "y: " << absoluteY;
+				
+				textcolor(LIGHTMAGENTA);
 				gotoxy(
 					absoluteX + x * 3,
 					absoluteY + y
 				);
-				
-				if(!field[x][y].isRevealed())
-				{
-					textcolor(WHITE);
-					cout << "-";
-				}
-				else
-					if(field[x][y].isWater())
-					{
-						textcolor(AGUA_COLOR);
-						cout << AGUA_CHAR;
-					}
-					else
-					{
-						Tipo *t = field[x][y].getEmbarcacao()->getTipo();
-						textcolor(t->getColor());
-						cout << t->getCharacter();
-					}
+				cout << CROSSHAIR;
 			}
-			// Limpas marcador de tiro ">" e "<" (caso estejam aparecendo (clearRelealed))
 			else
 			{
-				clearRelealed = false;
-				
-				gotoxy(
-					absoluteX + x * 3 - 1,
-					absoluteY + y
-				);
-				cout << " ";
-				
-				gotoxy(
-					absoluteX + x * 3 + 1,
-					absoluteY + y
-				);
-				cout << " ";
+				revealing = false;
+				clearRelealed = true;
 			}
 			
-			// Atualizar posição
-			x += dX;
-			y += dY;
+			hideCursor();
 			
-			// Ajustar caso saia da área da matriz
-			if(x < 0)
-				x = GAME_WIDTH - 1;
-			else if(x > GAME_WIDTH - 1)
-				x = 0;
+			// Deslocamento (-1 || 0 || 1)
+			int dX = 0;
+			int dY = 0;
+			
+			switch(getch())
+			{
+				// Up
+				case KEY_UP:
+					dY = -1;
+					break;
+				// Down
+				case KEY_DOWN:
+					dY = 1;
+					break;
+				// Right
+				case KEY_RIGHT:
+					dX = 1;
+					break;
+				// Left
+				case KEY_LEFT:
+					dX = -1;
+					break;
+				case KEY_ESC:
+					gotoxy(1, 10);
+					left = "\t\t\t";
+					cout << left << " ---------------------- \n";
+					cout << left << " | Deseja mesmo sair? | \n";
+					cout << left << " |--------------------| \n";
+					cout << left << " | > Sim              | \n";
+					cout << left << " |   Não              | \n";
+					cout << left << " ----------------------";
+					
+					waitKey(KEY_ENTER);
+					movingCursor = false;
+					
+					//return GameStatus::EXIT;
+					
+					break;
+				// Enter
+				case KEY_ENTER:
+					if(!field[x][y].isRevealed())
+					{
+						revealing = true;
+						
+						// Atualizar número de tiros
+						tiros--;
+						
+						if(tiros == 0)
+							return GameStatus::DEFEAT;
+						
+						textcolor(WHITE);
+						gotoxy(xTiros, yTiros);
+						cout << "   "; // <- Limpar
+						gotoxy(xTiros, yTiros);
+						cout << tiros; // <- Atualizar
+						
+						// Atualizar campo
+						gotoxy(
+							absoluteX + x * 3 - 1,
+							absoluteY + y
+						);
+						
+						textcolor(LIGHTMAGENTA);
+						cout << OPEN_SHOT_MARKER;
+						
+						// Revelar peça
+						field[x][y].reveal();
+						
+						// Printar peça revelada
+						if(field[x][y].isWater())
+						{
+							textcolor(AGUA_COLOR);
+							cout << AGUA_CHAR;
+						}
+						else
+						{
+							Tipo *t = field[x][y].getEmbarcacao()->getTipo();
+							textcolor(t->getColor());
+							cout << t->getCharacter();
+						}
+						
+						textcolor(LIGHTMAGENTA);
+						cout << CLOSE_SHOT_MARKER;
+						
+						// Atualiza status de tiro
+						string status;
+						if(field[x][y].isWater())
+						{
+							textcolor(AGUA_COLOR);
+							status = "Tiro ao mar";
+						}
+						else
+						{
+							if(!field[x][y].getEmbarcacao()->isSunk())
+							{
+								textcolor(WHITE);
+								status += "Embarcação atingida";
+							}
+							else
+							{
+								// Remove sink from list
+								for (list<Embarcacao*>::iterator it = shipsNotSunk.begin(); it != shipsNotSunk.end(); ++it)
+									if(*it == field[x][y].getEmbarcacao())
+									{
+										shipsNotSunk.erase(it);
+										break;
+									}
+									
+								// Check if the game is over
+								if(shipsNotSunk.empty())
+									return GameStatus::VICTORY;
+								
+								// Shot status
+								Tipo* tipo = field[x][y].getEmbarcacao()->getTipo();
+								
+								textcolor(tipo->getColor());
+								status += tipo->getName() + " afundado";
+								
+								// Atualiza número de atingidos
+								tipo->incrementarQtdAfundados();
+								
+								// Atualizar tabela de status
+								for(int iTipo = 0; iTipo < sizeof(tipos) / sizeof(*tipos); iTipo++)
+									if(tipos[iTipo] == tipo)
+									{
+										int qtd = tipo->getQtdAfundados();
+										gotoxy(
+											xAfundados + (sizeMaiorQtd - to_string(qtd).size()),
+											yPrimeiroAfundados + iTipo
+										);
+										cout << qtd;
+										break;
+									}
+							}
+						}
+						
+						gotoxy(xLeftStatusTiro, yStatusTiro);
+						cout << cleanStatusTiro; // <- Limpar
+						gotoxy(xMeioStatusTiro - status.size() / 2, yStatusTiro);
+						cout << status; // <- Exibir
+					}
+					break;
+			}
+			
+			// X em movimento
+			if(!revealing)
+			{
+				// Limpar X da posição anterior
+				if(!clearRelealed)
+				{
+					gotoxy(
+						absoluteX + x * 3,
+						absoluteY + y
+					);
+					
+					if(!field[x][y].isRevealed())
+					{
+						textcolor(WHITE);
+						cout << "-";
+					}
+					else
+						if(field[x][y].isWater())
+						{
+							textcolor(AGUA_COLOR);
+							cout << AGUA_CHAR;
+						}
+						else
+						{
+							Tipo *t = field[x][y].getEmbarcacao()->getTipo();
+							textcolor(t->getColor());
+							cout << t->getCharacter();
+						}
+				}
+				// Limpas marcador de tiro ">" e "<" (caso estejam aparecendo (clearRelealed))
+				else
+				{
+					clearRelealed = false;
+					
+					gotoxy(
+						absoluteX + x * 3 - 1,
+						absoluteY + y
+					);
+					cout << " ";
+					
+					gotoxy(
+						absoluteX + x * 3 + 1,
+						absoluteY + y
+					);
+					cout << " ";
+				}
 				
-			if(y < 0)
-				y = GAME_HEIGHT - 1;
-			else if(y > GAME_HEIGHT - 1)
-				y = 0;
+				// Atualizar posição
+				x += dX;
+				y += dY;
+				
+				// Ajustar caso saia da área da matriz
+				if(x < 0)
+					x = GAME_WIDTH - 1;
+				else if(x > GAME_WIDTH - 1)
+					x = 0;
+					
+				if(y < 0)
+					y = GAME_HEIGHT - 1;
+				else if(y > GAME_HEIGHT - 1)
+					y = 0;
+			}
 		}
 	}
 }
@@ -755,7 +878,14 @@ int main()
 	// CONFIGS
 	setlocale(LC_ALL, ""); // <- Habilita caracterer especiais
 	
-	system("mode 80, 85"); // <- Tamanho da tela
+	/*const char* mode = "mode " + to_string(WINDOW_WIDTH) + ", 85";
+	system(mode); // <- Tamanho da tela*/
+	
+	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD sizeOfBuff;
+	sizeOfBuff.X = WINDOW_WIDTH;
+	sizeOfBuff.Y = 10;
+	SetConsoleScreenBufferSize(buff, sizeOfBuff);
 	
 	srand((unsigned) time(0)); // <- Possibilita geração de números pseudo-randômicos diferentes a cada execução
 	
@@ -824,6 +954,18 @@ int main()
 		margin = "\t\t\t  ";
 		textcolor(WHITE);
 		cout << "\n\n\n\n";
+		
+		menu(
+			"MENU PRINCIPAL",
+			{
+				"NOVO JOGO",
+				"INSTRUÇÕES DO JOGO",
+				"RANKING",
+				"SAIR"
+			}, opt
+		);
+		
+		/*
 		cout << margin << "----------------------------- \n";
 		cout << margin << "|      ";
 		textcolor(LIGHTMAGENTA);
@@ -877,6 +1019,7 @@ int main()
 			opt += arrowDir;
 		}
 		while(choosing);
+		*/
 		
 		system("cls");
 		
