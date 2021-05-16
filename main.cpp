@@ -10,6 +10,7 @@
 #include <iterator>  // <- Manipulate list
 #include <ctime>	 // <- Use time in random numbers
 #include <windows.h>
+#include <fstream> 	 // <- Write and read files
 
 // FILES
 
@@ -273,6 +274,15 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 			}
 		}
 	}
+}
+
+void saveScore(string name, int score)
+{
+	// Write score file
+	ofstream inFile;
+	inFile.open("score.txt");
+	inFile << name << " - " << score;
+	inFile.close();
 }
 
 
@@ -880,7 +890,18 @@ void instructions()
 // Ranking
 void ranking()
 {
-	
+	// Read score file
+	string line;
+	ifstream outFile("score.txt");
+	if(outFile.is_open())
+	{
+		while(getline(outFile, line))
+		{
+			cout << line << '\n';
+		}
+		
+		outFile.close();
+	}
 }
 
 
