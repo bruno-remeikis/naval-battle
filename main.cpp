@@ -49,7 +49,7 @@ COLORS const AGUA_COLOR = LIGHTBLUE;
 
 // Tipos pré-definidos
 Tipo *tipos[] = {
-	new Tipo("Submarino"   , 3, 1, '1', LIGHTCYAN),
+	new Tipo("Submarino"   , /*3*/ 20, 1, '1', LIGHTCYAN),
 	new Tipo("Encouraçado" , 2, 2, '2', GREEN    ),
 	new Tipo("Cruzador"    , 3, 3, '3', DARKGRAY ),
 	new Tipo("Hidroavião"  , 4, 1, '4', LIGHTRED ),
@@ -295,29 +295,38 @@ int menu(string title, vector<string> options, int opt)
 		border += "-";
 	border += "\n";
 	
+	int x = WINDOW_WIDTH / 2 - border.size() / 2;
+	
 	// Top border
+	gotoxy(x, wherey());
+	textcolor(WHITE);
 	cout << border;
 	
 	// Title
+	gotoxy(x, wherey());
 	cout << "|";
 	const int initX = wherex() + 1;
 	const int initY = wherey() + 2;
 	
+	gotoxy(x + border.size() / 2 - title.size() / 2, wherey()); // <- Centralizar título
 	textcolor(LIGHTMAGENTA);
 	cout << title;
-	gotoxy(biggerTxt + 4, wherey());
+	gotoxy(x + biggerTxt + 3, wherey());
 	textcolor(WHITE);
 	cout << "|\n";
 	
+	gotoxy(x, wherey());
 	cout << border;
 		
 	for(string option: options)
 	{
+		gotoxy(x, wherey());
 		cout << "|   " << option;
-		gotoxy(biggerTxt + 4, wherey());
+		gotoxy(x + biggerTxt + 3, wherey());
 		cout << "|\n";
 	}
 	
+	gotoxy(x, wherey());
 	cout << border;
 	
 	// MOVIMENTAR CURSOR
@@ -356,7 +365,8 @@ int menu(string title, vector<string> options, int opt)
 	}
 	while(choosing);
 	
-	return opt;
+	int opt2 = opt;
+	return opt2;
 }
 
 // Jogo
@@ -518,10 +528,14 @@ GameStatus game()
 			cout << tipo->getCharacter() << " - " << tipo->getName();
 			
 			gotoxy(xTamanho, wherey());
-			cout << " (tamanho " << tipo->getSize() << ")";
+			cout << " (tamanho: " << tipo->getSize() << ")";
 			
-			gotoxy(xAfundados + sizeMaiorQtd - 1, wherey());
-			cout << "0/" << tipo->getQtd();
+			int qtd = tipo->getQtdAfundados();
+			gotoxy(
+				xAfundados + (sizeMaiorQtd - to_string(qtd).size()),
+				wherey()
+			);
+			cout << qtd << "/" << tipo->getQtd();
 			gotoxy(xRightStatusTable - txtAfundados.size(), wherey());
 			cout << txtAfundados;
 			
@@ -544,8 +558,6 @@ GameStatus game()
 			// Printar posição atual
 			if(!revealing)
 			{
-				//cout << "y: " << absoluteY;
-				
 				textcolor(LIGHTMAGENTA);
 				gotoxy(
 					absoluteX + x * 3,
@@ -565,6 +577,7 @@ GameStatus game()
 			int dX = 0;
 			int dY = 0;
 			
+			int opt;
 			switch(getch())
 			{
 				// Up
@@ -584,19 +597,21 @@ GameStatus game()
 					dX = -1;
 					break;
 				case KEY_ESC:
-					gotoxy(1, 10);
-					left = "\t\t\t";
-					cout << left << " ---------------------- \n";
-					cout << left << " | Deseja mesmo sair? | \n";
-					cout << left << " |--------------------| \n";
-					cout << left << " | > Sim              | \n";
-					cout << left << " |   Não              | \n";
-					cout << left << " ----------------------";
+					system("cls");
+					cout << "\n\n\n\n\n\n";
 					
-					waitKey(KEY_ENTER);
-					movingCursor = false;
+					opt = menu(
+						"Deseja mesmo sair?",
+						{
+							"Não",
+							"Sim"
+						}, 0
+					);
 					
-					//return GameStatus::EXIT;
+					movingCursor = false; // <- Exit loop
+					
+					if(opt == 1)
+						return GameStatus::EXIT;
 					
 					break;
 				// Enter
@@ -876,18 +891,17 @@ void ranking()
 int main()
 {
 	// CONFIGS
+	
+	// Set charset
 	setlocale(LC_ALL, ""); // <- Habilita caracterer especiais
 	
-	/*const char* mode = "mode " + to_string(WINDOW_WIDTH) + ", 85";
-	system(mode); // <- Tamanho da tela*/
-	
-	HANDLE buff = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD sizeOfBuff;
-	sizeOfBuff.X = WINDOW_WIDTH;
-	sizeOfBuff.Y = 10;
-	SetConsoleScreenBufferSize(buff, sizeOfBuff);
-	
-	srand((unsigned) time(0)); // <- Possibilita geração de números pseudo-randômicos diferentes a cada execução
+	// Set window width
+	const basic_string<char> modeBS = "mode " + to_string(WINDOW_WIDTH) + ", 85";
+	const char *mode = modeBS.c_str();
+	system(mode);
+
+	// Possibilitar geração de números pseudo-randômicos diferentes a cada execução
+	srand((unsigned) time(0));
 	
 	// Variables
 	int opt = 0;
@@ -955,7 +969,7 @@ int main()
 		textcolor(WHITE);
 		cout << "\n\n\n\n";
 		
-		menu(
+		opt = menu(
 			"MENU PRINCIPAL",
 			{
 				"NOVO JOGO",
@@ -964,62 +978,6 @@ int main()
 				"SAIR"
 			}, opt
 		);
-		
-		/*
-		cout << margin << "----------------------------- \n";
-		cout << margin << "|      ";
-		textcolor(LIGHTMAGENTA);
-		cout << "MENU PRINCIPAL";
-		textcolor(WHITE);
-		cout << "       | \n";
-		cout << margin << "----------------------------- \n";
-		cout << margin << "|   NOVO JOGO               | \n";
-		cout << margin << "|   INSTRUÇÕES DO JOGO      | \n";
-		cout << margin << "|   RANKING                 | \n";
-		cout << margin << "|   SAIR                    | \n";
-		cout << margin << "----------------------------- \n";
-		
-		// MENU OPTIONS
-		bool choosing = true;
-		
-		const int initX = 29;
-		const int initY = 23;
-		
-		textcolor(LIGHTMAGENTA);
-		
-		do
-		{
-			gotoxy(initX, initY + opt);
-			cout << ">";
-			hideCursor();
-			
-			int arrowDir = 0;
-			
-			switch(getch())
-			{
-				// Up
-				case KEY_UP:
-				    if(opt > 0)
-				    	arrowDir = -1;
-				    break;
-				// Down
-				case KEY_DOWN:
-				    if(opt < 3)
-				    	arrowDir = 1;
-				    break;
-				// Enter
-				case KEY_ENTER:
-				    choosing = false;
-				    break;
-			}
-			
-			gotoxy(initX, initY + opt);
-			cout << " ";
-			
-			opt += arrowDir;
-		}
-		while(choosing);
-		*/
 		
 		system("cls");
 		
