@@ -27,7 +27,7 @@
 #define KEY_ENTER 13
 #define KEY_ESC 27
 
-#define GAME_WIDTH 20
+#define GAME_WIDTH 25
 #define GAME_HEIGHT 15
 
 using namespace std;
@@ -50,18 +50,12 @@ COLORS const AGUA_COLOR = LIGHTBLUE;
 
 // Tipos pré-definidos
 Tipo *tipos[] = {
-	new Tipo("Submarino"   , /*3*/ 20, 1, '1', LIGHTCYAN),
+	new Tipo("Submarino"   , 3, 1, '1', LIGHTCYAN),
 	new Tipo("Encouraçado" , 2, 2, '2', GREEN    ),
 	new Tipo("Cruzador"    , 3, 3, '3', DARKGRAY ),
 	new Tipo("Hidroavião"  , 4, 1, '4', LIGHTRED ),
-	new Tipo("Porta-aviões", 1, 4, '5', YELLOW   )
+	new Tipo("Porta-aviões", 1, 4, '5', YELLOW   ),
 };
-
-// Matriz do jogo
-Peca field[GAME_WIDTH][GAME_HEIGHT];
-
-// Embarcações não afundadas
-list<Embarcacao*> shipsNotSunk;
 
 
 
@@ -140,8 +134,11 @@ void waitKey(int key)
 }
 
 // Gerar embarcação
-void gerarEmbarcacoes(Tipo *tipoAtual)
+template <size_t rows, size_t cols>
+list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
 {
+	list<Embarcacao*> ships;
+	
 	for(int qtd = 0; qtd < tipoAtual->getQtd(); qtd++)
 	{
 		// Posicionar embarcação
@@ -266,7 +263,7 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 					}
 					
 					e->setPecas(pecas);
-					shipsNotSunk.push_back(e);
+					ships.push_back(e);
 					
 					directing = false;
 					sortingCoord = false;
@@ -274,6 +271,8 @@ void gerarEmbarcacoes(Tipo *tipoAtual)
 			}
 		}
 	}
+	
+	return ships;
 }
 
 void saveScore(string name, int score)
@@ -382,12 +381,20 @@ int menu(string title, vector<string> options, int opt)
 // Jogo
 GameStatus game()
 {
-	// VARIÁVEIS
+	// Matriz do jogo
+	Peca field[GAME_WIDTH][GAME_HEIGHT];
+	
+	// Embarcações não afundadas
+	list<Embarcacao*> shipsNotSunk;
+
+	// Tiros
 	int tiros = 500;
 	
 	// GERAR EMBARCAÇÕES
 	for(Tipo *tipo: tipos)
-		gerarEmbarcacoes(tipo);
+		shipsNotSunk.merge(
+			gerarEmbarcacoes(field, tipo)
+		);
 	
 	// Variáveis para movimento do cursor
 	int x = 0;
@@ -451,7 +458,7 @@ GameStatus game()
 		for(int j = 0; j < GAME_HEIGHT; j++)
 		{
 			textcolor(WHITE);
-			cout << " | " << char(j + 65) << " |";
+			cout << " | " << char(j % 26 + 65) << " |"; // <- 26 = número de letras no alfabeto; 65 = código ASCII do caractere 'A'
 			
 			for(int i = 0; i < GAME_WIDTH; i++)
 			{
