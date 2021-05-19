@@ -27,7 +27,7 @@
 #define KEY_ENTER 13
 #define KEY_ESC 27
 
-#define GAME_WIDTH 20
+#define GAME_WIDTH 25
 #define GAME_HEIGHT 15
 
 using namespace std;
@@ -389,6 +389,7 @@ GameStatus game()
 
 	// Tiros
 	int tiros = 500;
+	int inWater = 0;
 	
 	// GERAR EMBARCAÇÕES
 	for(Tipo *tipo: tipos)
@@ -445,37 +446,62 @@ GameStatus game()
 		gotoxy(xTiros + 3, yTiros);
 		cout << " |\n ------------------------";
 		
-		// CAMPO
+		// COORDENADAS DO EIXO X
+		
+		// Espaço destinado a cada coordenada
 		int charSpace = to_string(GAME_WIDTH).size();
-		string line = "";
-		for(int i = 0; i < GAME_WIDTH * (charSpace + 1); i++)
-			line += "-";
+		
+		// Espaço a ser colocado a cada linha antes da primeira peça
+		string initRowSpace = "";
+		for(int i2 = 0; i2 < charSpace / 2; i2++)
+			initRowSpace += " ";
 			
+		// Espaço entre as peças
+		string betweenPieces = "";
+		for(int i2 = 0; i2 < charSpace; i2++)
+			betweenPieces += " ";
+		
+		// Linha (borda) horiontal do campo
+		string line = "";
+		for(int i = 0; i < GAME_WIDTH * (charSpace + 1) + initRowSpace.size(); i++)
+			line += "-";
+		
 		cout << "\n -------" << line;
 		cout << "\n |   | ";
 		int xInitNumbers = wherex();
 		for(int i = 1; i <= GAME_WIDTH; i++)
 		{
-			gotoxy(xInitNumbers + (i - 1) * (charSpace + 1) + (charSpace - to_string(i).size()), wherey());
+			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! x inicial + index * espaço por número + espaço por número - 
+			gotoxy(
+				xInitNumbers + (i - 1) * (charSpace + 1) + (charSpace - 1) - ((charSpace - to_string(i).size()) / 2),
+				wherey()
+			);
 			cout << i << " ";
 		}
 		cout << "|";
 		cout << "\n ----+--" << line << " \n";
 		
 		const int
-			absoluteX = 9,
+			absoluteX = xInitNumbers + initRowSpace.size(),
 			absoluteY = wherey();
 		
-		//textcolor(WHITE);
+		// CAMPO
 		for(int j = 0; j < GAME_HEIGHT; j++)
 		{
 			textcolor(WHITE);
-			cout << " | " << char(j % 26 + 65) << " |"; // <- 26 = número de letras no alfabeto; 65 = código ASCII do caractere 'A'
+			cout << " | " << char(j % 26 + 65) << " | " << initRowSpace; // <- 26 = número de letras no alfabeto; 65 = código ASCII do caractere 'A'
 			
 			for(int i = 0; i < GAME_WIDTH; i++)
 			{
-				textcolor(WHITE);
-				cout << "  ";
+				//cout << "  ";
+				//cout << initRowSpace;
+				
+				/*
+				gotoxy(
+					xInitNumbers + i * (charSpace + 1),
+					wherey()
+				);
+				*/
 				
 				if(!field[i][j].isRevealed())
 				{
@@ -485,17 +511,22 @@ GameStatus game()
 				{
 					textcolor(AGUA_COLOR);
 					cout << AGUA_CHAR;
+					
+					textcolor(WHITE);
 				}
 				else
 				{
 					Tipo *t = field[i][j].getEmbarcacao()->getTipo();
 					textcolor(t->getColor());
 					cout << t->getCharacter();
+					
+					textcolor(WHITE);
 				}
+				
+				cout << betweenPieces;
 			}
 			
-			textcolor(WHITE);
-			cout << " |\n";
+			cout << "|\n";
 		}
 		
 		cout << " -------" << line;
@@ -538,6 +569,15 @@ GameStatus game()
 			if(newXAfudados < xAfundados)
 				xAfundados = newXAfudados;
 		}
+		
+		int xInWater = xRightStatusTable - txtAfundados.size() - 1;
+		int yInWater = wherey();
+		
+		gotoxy(
+			xInWater - to_string(inWater).size() + 1,
+			yInWater
+		);
+		cout << inWater << " tiros";
 		
 		// Fim da água
 		textcolor(WHITE);
@@ -589,7 +629,7 @@ GameStatus game()
 			{
 				textcolor(LIGHTMAGENTA);
 				gotoxy(
-					absoluteX + x * 3,
+					absoluteX + x * (betweenPieces.size() + 1),
 					absoluteY + y
 				);
 				cout << CROSSHAIR;
@@ -661,51 +701,54 @@ GameStatus game()
 						gotoxy(xTiros, yTiros);
 						cout << tiros; // <- Atualizar
 						
-						// Atualizar campo
+						// Printar ponteiro de tiro (esquerdo)
 						gotoxy(
-							absoluteX + x * 3 - 1,
+							absoluteX + x * (betweenPieces.size() + 1) - 1,
 							absoluteY + y
 						);
-						
 						textcolor(LIGHTMAGENTA);
 						cout << OPEN_SHOT_MARKER;
 						
 						// Revelar peça
 						field[x][y].reveal();
 						
-						// Printar peça revelada
+						string status;
+						COLORS statusColor;
 						if(field[x][y].isWater())
 						{
+							inWater++;
+							
+							// Printar peça revelada
 							textcolor(AGUA_COLOR);
 							cout << AGUA_CHAR;
+							
+							// Atualiza status de tiro
+							statusColor = AGUA_COLOR;
+							status = "Tiro ao mar";
+							
+							// Atualizar tabela de status
+							gotoxy(
+								xInWater - to_string(inWater).size() + 1,
+								yInWater
+							);
+							cout << inWater;
 						}
 						else
 						{
+							// Printar peça revelada
 							Tipo *t = field[x][y].getEmbarcacao()->getTipo();
 							textcolor(t->getColor());
 							cout << t->getCharacter();
-						}
-						
-						textcolor(LIGHTMAGENTA);
-						cout << CLOSE_SHOT_MARKER;
-						
-						// Atualiza status de tiro
-						string status;
-						if(field[x][y].isWater())
-						{
-							textcolor(AGUA_COLOR);
-							status = "Tiro ao mar";
-						}
-						else
-						{
+							
+							// Atualiza status de tiro
 							if(!field[x][y].getEmbarcacao()->isSunk())
 							{
-								textcolor(WHITE);
+								statusColor = WHITE;
 								status += "Embarcação atingida";
 							}
 							else
 							{
-								// Remove sink from list
+								// Remove ship from list
 								for (list<Embarcacao*>::iterator it = shipsNotSunk.begin(); it != shipsNotSunk.end(); ++it)
 									if(*it == field[x][y].getEmbarcacao())
 									{
@@ -720,7 +763,7 @@ GameStatus game()
 								// Shot status
 								Tipo* tipo = field[x][y].getEmbarcacao()->getTipo();
 								
-								textcolor(tipo->getColor());
+								statusColor = tipo->getColor();
 								status += tipo->getName() + " afundado";
 								
 								// Atualiza número de atingidos
@@ -741,6 +784,22 @@ GameStatus game()
 							}
 						}
 						
+						// Printar ponteiro de tiro (direito)
+						gotoxy(
+							absoluteX + x * (betweenPieces.size() + 1) + 1,
+							absoluteY + y
+						);
+						textcolor(LIGHTMAGENTA);
+						cout << CLOSE_SHOT_MARKER;
+						
+						/*
+						gotoxy(1, 1);
+						textcolor(statusColor);
+						cout << status;
+						*/
+						
+						// Atualiza status de tiro
+						textcolor(statusColor);
 						gotoxy(xLeftStatusTiro, yStatusTiro);
 						cout << cleanStatusTiro; // <- Limpar
 						gotoxy(xMeioStatusTiro - status.size() / 2, yStatusTiro);
@@ -755,8 +814,9 @@ GameStatus game()
 				// Limpar X da posição anterior
 				if(!clearRelealed)
 				{
+					// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					gotoxy(
-						absoluteX + x * 3,
+						absoluteX + x * (betweenPieces.size() + 1),
 						absoluteY + y
 					);
 					
@@ -784,13 +844,13 @@ GameStatus game()
 					clearRelealed = false;
 					
 					gotoxy(
-						absoluteX + x * 3 - 1,
+						absoluteX + x * (betweenPieces.size() + 1) - 1,
 						absoluteY + y
 					);
 					cout << " ";
 					
 					gotoxy(
-						absoluteX + x * 3 + 1,
+						absoluteX + x * (betweenPieces.size() + 1) + 1,
 						absoluteY + y
 					);
 					cout << " ";
