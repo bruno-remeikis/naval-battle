@@ -27,7 +27,7 @@
 #define KEY_ENTER 13
 #define KEY_ESC 27
 
-#define GAME_WIDTH 25
+#define GAME_WIDTH 20
 #define GAME_HEIGHT 15
 
 using namespace std;
@@ -446,9 +446,21 @@ GameStatus game()
 		cout << " |\n ------------------------";
 		
 		// CAMPO
-		cout << "\n -------------------------------------------------------------------";
-		cout << "\n |   |  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 |";
-		cout << "\n ----+-------------------------------------------------------------- \n";
+		int charSpace = to_string(GAME_WIDTH).size();
+		string line = "";
+		for(int i = 0; i < GAME_WIDTH * (charSpace + 1); i++)
+			line += "-";
+			
+		cout << "\n -------" << line;
+		cout << "\n |   | ";
+		int xInitNumbers = wherex();
+		for(int i = 1; i <= GAME_WIDTH; i++)
+		{
+			gotoxy(xInitNumbers + (i - 1) * (charSpace + 1) + (charSpace - to_string(i).size()), wherey());
+			cout << i << " ";
+		}
+		cout << "|";
+		cout << "\n ----+--" << line << " \n";
 		
 		const int
 			absoluteX = 9,
@@ -486,7 +498,7 @@ GameStatus game()
 			cout << " |\n";
 		}
 		
-		cout << " -------------------------------------------------------------------";
+		cout << " -------" << line;
 		
 		// STATUS DE TIRO
 		string left = "\n\t\t   ";
