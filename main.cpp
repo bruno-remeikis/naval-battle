@@ -275,13 +275,16 @@ list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
 	return ships;
 }
 
-void saveScore(string name, int score)
+// Return the positon in the ranking
+int saveScore(string name, int score)
 {
 	// Write score file
 	ofstream inFile;
 	inFile.open("score.txt");
 	inFile << name << " - " << score;
 	inFile.close();
+	
+	return 0;
 }
 
 
@@ -381,6 +384,9 @@ int menu(string title, vector<string> options, int opt)
 // Jogo
 GameStatus game()
 {
+	return GameStatus::VICTORY;
+	//return GameStatus::DEFEAT;
+	
 	// Matriz do jogo
 	Peca field[GAME_WIDTH][GAME_HEIGHT];
 	
@@ -875,29 +881,103 @@ GameStatus game()
 	}
 }
 
-// Troféu
+// Victory
 void victory()
 {
+	int ranking = 1;
+	int score = 100;
+	
+	//int ranking = saveScore(string name, int score);
+	
 	system("cls");
 	
-	string left = "\t\t\t  ";
+	string left = "\n\t\t\t  ";
 	cout << "\n\n\n";
 	
 	textcolor(YELLOW);
-	cout << left << "   _____________     \n";
-	cout << left << "  (_____________)    \n";
-	cout << left << "___|           |___  \n";
-	cout << left << "|  |           |  |  \n";
-	cout << left << "|  | PARABÉNS! |  |  \n";
-	cout << left << "|  |           |  |  \n";
-	cout << left << " \\__\\         /__/ \n";
-	cout << left << "     \\_______/      \n";
-	cout << left << "       (___)         \n";
-	cout << left << "        | |          \n";
-	cout << left << "        |_|          \n";
-	cout << left << "     __(___)__       \n";
-	cout << left << "     |///////|       \n";
-	cout << left << "     |_______|       \n";
+	cout << left << "   _____________     ";
+	cout << left << "  (_____________)    ";
+	cout << left << "___|           |___  ";
+	cout << left << "|  |           |  |  ";
+	cout << left << "|  | PARABÉNS! |  |  ";
+	cout << left << "|  |           |  |  ";
+	cout << left << " \\__\\         /__/ ";
+	cout << left << "     \\_______/      ";
+	cout << left << "       (___)         ";
+	cout << left << "        | |          ";
+	cout << left << "        |_|          ";
+	cout << left << "     __(___)__       ";
+	cout << left << "     |///////|       ";
+	cout << left << "     |_______|       ";
+	
+	cout << "\n\n";
+	cout << left << "  Ranking: " << ranking;
+	cout << left << "  Score:   " << score;
+	
+	cout << left << "Nome de jogador:";
+	cout << left << "-----------";
+	cout << left << "| ";
+	int xName = wherex();
+	int yName = wherey();
+	cout << ". . . . |";
+	cout << left << "-----------";
+	
+	string nome = "";
+	while(true)
+	{
+		hideCursor();
+		
+		int c = getch();
+		
+		if(((c >= 48 && c <= 57)   // <- Número
+		||  (c >= 65 && c <= 90)   // <- Maiúscula
+		||  (c >= 97 && c <= 122)) // <- Minúscula
+		&& nome.size() < 4) 
+		{
+			nome += (char) c;
+			
+			gotoxy(xName + (nome.size() - 1) * 2, yName);
+			cout << (char) c;
+		}
+		// Apagar
+		else if(c == 8 && nome.size() > 0)
+		{
+			gotoxy(xName + (nome.size() - 1) * 2, yName);
+			cout << ".";
+			
+			nome.pop_back();
+		}
+	}
+	
+	cout << "\n\n";
+	cout << left << "APERTE ";
+	textcolor(LIGHTMAGENTA);
+	cout << "ENTER";
+	textcolor(WHITE);
+	cout << " PARA IR AO MENÚ PRINCIPAL";
+	
+	waitKey(KEY_ENTER);
+}
+
+// Defeat
+void defeat()
+{
+	textcolor(RED);
+	
+	string left = "\n\t\t";
+	
+	cout << left << " ____   _____  ____  ____  _____  ______  _____     ";
+	cout << left << "|  _ \\ |  ___||    \\|    \\|  _  ||__  __||     | ";
+	cout << left << "| | \\ ||  _|  |   _/|   _/| | | |  |  |  |  _  |   ";
+	cout << left << "| |_/ || |___ |   \\ |   \\ | |_| |  |  |  | | | |  ";
+	cout << left << "|____/ |_____||_|\\_\\|_|\\_\\|_____|  |__|  |_| |_|";
+	
+	cout << "\n\n";
+	cout << left << "APERTE ";
+	textcolor(LIGHTMAGENTA);
+	cout << "ENTER";
+	textcolor(WHITE);
+	cout << " PARA IR AO MENÚ PRINCIPAL";
 	
 	waitKey(KEY_ENTER);
 }
@@ -1093,8 +1173,7 @@ int main()
 						break;
 						
 					case GameStatus::DEFEAT:
-						cout << "\n DERROTA";
-						waitKey(KEY_ENTER);
+						defeat();
 						break;
 				}
 				break;
