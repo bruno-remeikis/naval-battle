@@ -5,6 +5,7 @@
 #include <windows.h> // <- Redimention window
 #include <conio2.h>  // <- Use gotoxy and colors
 #include <cstdlib>   // <- Use random
+#include <array>	 // <- Use array
 #include <list>		 // <- Use list
 #include <vector>	 // <- Use vector
 #include <iterator>  // <- Manipulate list
@@ -12,13 +13,9 @@
 #include <windows.h>
 #include <fstream> 	 // <- Write and read files
 
-// FILES
-
-#include "classes.cpp"
-
 // CONSTANTS
 
-#define WINDOW_WIDTH 80
+#define WINDOW_WIDTH 100
 
 #define KEY_UP 72
 #define KEY_DOWN 80
@@ -28,8 +25,13 @@
 #define KEY_ESC 27
 #define KEY_BACKSPACE 8
 
-#define GAME_WIDTH 25
+#define GAME_WIDTH 20
 #define GAME_HEIGHT 15
+
+// FILES
+
+#include "classes.cpp"
+#include "utils.cpp"
 
 using namespace std;
 
@@ -42,8 +44,8 @@ using namespace std;
 // Marcadores
 char const
 	CROSSHAIR 		  = 'x', // <- Mira
-	OPEN_SHOT_MARKER  = '>', // <- 
-	CLOSE_SHOT_MARKER = '<'; // <- 
+	OPEN_SHOT_MARKER  = '>', // <- Esquerda do marcador de tiro
+	CLOSE_SHOT_MARKER = '<'; // <- Direita do marcador de tiro
 
 // Água
 char const AGUA_CHAR = '#';
@@ -75,322 +77,12 @@ enum GameStatus
 
 
 
-// FUNCTIONS
-
-/*
-void gotoxy2(int x, int y)
-{
-	SetConsoleCursorPosition(
-		GetStdHandle(STD_OUTPUT_HANDLE),
-		(COORD) {x - 1, y - 1}
-	);
-}
-
-int wherex2()
-{
-    CONSOLE_SCREEN_BUFFER_INFO con;
-    HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-    if(hcon != INVALID_HANDLE_VALUE &&
-        GetConsoleScreenBufferInfo(hcon,&con)) 
-    {
-        return con.dwCursorPosition.X;
-    }
-    
-    return 0;
-}
-
-int wherey2()
-{
-	int pos[2];
-    CONSOLE_SCREEN_BUFFER_INFO con;
-    HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-    if(hcon != INVALID_HANDLE_VALUE &&
-    	GetConsoleScreenBufferInfo(hcon,&con)) 
-    {
-        return con.dwCursorPosition.Y;
-    }
-    
-    return 0;
-}
-*/
-
-// Coloca o cursor em [1; 1]
-void hideCursor()
-{
-	gotoxy(1, 1);
-}
-
-// Interrompe o sistema até que a key passada seja pressionada
-void waitKey(int key)
-{
-	char input;
-	
-	do
-	{
-		input = getch();
-	}
-	while(input != key);
-}
-
-int getPosToCenter(string str)
-{
-	return WINDOW_WIDTH / 2 - str.size() / 2;
-}
-
-// Gerar embarcação
-template <size_t rows, size_t cols>
-list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
-{
-	list<Embarcacao*> ships;
-	
-	for(int qtd = 0; qtd < tipoAtual->getQtd(); qtd++)
-	{
-		// Posicionar embarcação
-		bool sortingCoord = true;
-		while(sortingCoord)
-		{
-			// Sortear coordenada inicial
-			int x, y;
-			while(true)
-			{
-				x = rand() % GAME_WIDTH;
-				y = rand() % GAME_HEIGHT;
-				
-				if(field[x][y].isWater())
-					break;
-			}
-			
-			// Coordenadas
-			Coordenada coords[tipoAtual->getSize()];
-			coords[0].setX(x);
-			coords[0].setY(y);
-			
-			// Direções disponíveis
-			list<int> directions = { 0, 1, 2, 3 };
-			
-			// Direcionar embarcação
-			bool directing = true;
-			while(directing)
-			{
-				// Se não existirem mais direções disponíveis, volta e pega novas coordenadas
-				if(directions.empty())
-					break;
-				
-				// Sorteia uma direção
-				int iDir = rand() % directions.size();
-				
-				// Pega a direção sorteada
-				list<int>::iterator dir = directions.begin();
-				advance(dir, iDir);
-				
-				// Apaga a direção
-				directions.erase(dir);
-				
-				// Salvar coordenadas (caso válidas)
-				bool freeWay = true;
-				switch(*dir)
-				{
-					// Up
-					case 0:
-						for(int d = 1; d < tipoAtual->getSize(); d++)
-							if(field[x][y - d].isWater() && y - d >= 0)
-							{
-								coords[d].setX(x);
-								coords[d].setY(y - d);
-							}
-							else
-							{
-								freeWay = false;
-								break;
-							}
-						break;
-					// Down
-					case 1:
-						for(int d = 1; d < tipoAtual->getSize(); d++)
-							if(field[x][y + d].isWater() && y + d <= GAME_HEIGHT - 1)
-							{
-								coords[d].setX(x);
-								coords[d].setY(y + d);
-							}
-							else
-							{
-								freeWay = false;
-								break;
-							}
-						break;
-					// Right
-					case 2:
-						for(int d = 1; d < tipoAtual->getSize(); d++)
-							if(field[x + d][y].isWater() && x + d <= GAME_WIDTH - 1)
-							{
-								coords[d].setX(x + d);
-								coords[d].setY(y);
-							}
-							else
-							{
-								freeWay = false;
-								break;
-							}
-						break;
-					// Left
-					case 3:
-						for(int d = 1; d < tipoAtual->getSize(); d++)
-							if(field[x - d][y].isWater() && x - d >= 0)
-							{
-								coords[d].setX(x - d);
-								coords[d].setY(y);
-							}
-							else
-							{
-								freeWay = false;
-								break;
-							}
-						break;
-				}
-				
-				// Sair dos loops e passar para próxima embarcação
-				if(freeWay)
-				{
-					Embarcacao* e = new Embarcacao(tipoAtual);
-					//Peca* pecas[tipoAtual->getSize()];
-					list<Peca*> pecas;
-					
-					for(int iC = 0; iC < sizeof(coords) / sizeof(*coords); iC++)
-					{
-						int i = coords[iC].getX();
-						int j = coords[iC].getY();
-						
-						field[i][j].setEmbarcacao(e);
-						
-						//pecas[iC] = &field[i][j];
-						pecas.push_back(&field[i][j]);
-					}
-					
-					e->setPecas(pecas);
-					ships.push_back(e);
-					
-					directing = false;
-					sortingCoord = false;
-				}
-			}
-		}
-	}
-	
-	return ships;
-}
-
-// Return the positon in the ranking
-int saveScore(string name, int score)
-{
-	// Write score file
-	ofstream inFile;
-	inFile.open("score.txt");
-	inFile << name << " - " << score;
-	inFile.close();
-	
-	return 0;
-}
-
-
-
-
-
 // INTERFACE FUNCTIONS
-
-int menu(string title, vector<string> options, int opt)
-{
-	// CONSTRUIR MENÚ
-	int biggerTxt = title.size();
-	
-	for(string option: options)
-		if(option.size() + 4 > biggerTxt)
-			biggerTxt = option.size() + 4;
-			
-	string border = "----";
-	for(int i = 0; i < biggerTxt; i++)
-		border += "-";
-	border += "\n";
-	
-	int x = getPosToCenter(border);
-	
-	// Top border
-	gotoxy(x, wherey());
-	textcolor(WHITE);
-	cout << border;
-	
-	// Title
-	gotoxy(x, wherey());
-	cout << "|";
-	const int initX = wherex() + 1;
-	const int initY = wherey() + 2;
-	
-	gotoxy(x + border.size() / 2 - title.size() / 2, wherey()); // <- Centralizar título
-	textcolor(LIGHTMAGENTA);
-	cout << title;
-	gotoxy(x + biggerTxt + 3, wherey());
-	textcolor(WHITE);
-	cout << "|\n";
-	
-	gotoxy(x, wherey());
-	cout << border;
-		
-	for(string option: options)
-	{
-		gotoxy(x, wherey());
-		cout << "|   " << option;
-		gotoxy(x + biggerTxt + 3, wherey());
-		cout << "|\n";
-	}
-	
-	gotoxy(x, wherey());
-	cout << border;
-	
-	// MOVIMENTAR CURSOR
-	textcolor(LIGHTMAGENTA);
-	bool choosing = true;
-	do
-	{
-		gotoxy(initX, initY + opt);
-		cout << ">";
-		hideCursor();
-		
-		int arrowDir = 0;
-		
-		switch(getch())
-		{
-			// Up
-			case KEY_UP:
-			    if(opt > 0)
-			    	arrowDir = -1;
-			    break;
-			// Down
-			case KEY_DOWN:
-			    if(opt < 3)
-			    	arrowDir = 1;
-			    break;
-			// Enter
-			case KEY_ENTER:
-			    choosing = false;
-			    break;
-		}
-		
-		gotoxy(initX, initY + opt);
-		cout << " ";
-		
-		opt += arrowDir;
-	}
-	while(choosing);
-	
-	int opt2 = opt;
-	return opt2;
-}
 
 // Jogo
 GameStatus game()
 {
-	//return GameStatus::VICTORY;
+	return GameStatus::VICTORY;
 	//return GameStatus::DEFEAT;
 	
 	// Matriz do jogo
@@ -483,7 +175,6 @@ GameStatus game()
 		int xInitNumbers = wherex();
 		for(int i = 1; i <= GAME_WIDTH; i++)
 		{
-			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! x inicial + index * espaço por número + espaço por número - 
 			gotoxy(
 				xInitNumbers + (i - 1) * (charSpace + 1) + (charSpace - 1) - ((charSpace - to_string(i).size()) / 2),
 				wherey()
@@ -505,16 +196,6 @@ GameStatus game()
 			
 			for(int i = 0; i < GAME_WIDTH; i++)
 			{
-				//cout << "  ";
-				//cout << initRowSpace;
-				
-				/*
-				gotoxy(
-					xInitNumbers + i * (charSpace + 1),
-					wherey()
-				);
-				*/
-				
 				if(!field[i][j].isRevealed())
 				{
 					cout << "-";
@@ -804,12 +485,6 @@ GameStatus game()
 						textcolor(LIGHTMAGENTA);
 						cout << CLOSE_SHOT_MARKER;
 						
-						/*
-						gotoxy(1, 1);
-						textcolor(statusColor);
-						cout << status;
-						*/
-						
 						// Atualiza status de tiro
 						textcolor(statusColor);
 						gotoxy(xLeftStatusTiro, yStatusTiro);
@@ -826,7 +501,6 @@ GameStatus game()
 				// Limpar X da posição anterior
 				if(!clearRelealed)
 				{
-					// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 					gotoxy(
 						absoluteX + x * (betweenPieces.size() + 1),
 						absoluteY + y
@@ -891,7 +565,7 @@ void backToMenuText(int y)
 {
 	// Back text
 	textcolor(LIGHTMAGENTA);
-	string strs[] = {
+	vector<string> strs = {
 		"Aperte ",
 		"ENTER ",
 		"para ir ao menú principal"
@@ -900,18 +574,11 @@ void backToMenuText(int y)
 	string str = "";
 	for(string s: strs)
 		str += s;
-	int x = getPosToCenter(str);
+	int x = getPosToCenter(str.size());
 	
 	gotoxy(x, y);
-	for(int i = 0; i < sizeof(strs) / sizeof(*strs); i++)
-	{
-		if(i % 2 == 0)
-			textcolor(WHITE);
-		else
-			textcolor(LIGHTMAGENTA);
-			
-		cout << strs[i];
-	}
+	printAlternatingColors(strs, {WHITE, LIGHTMAGENTA});
+
 	
 	waitKey(KEY_ENTER);
 }
@@ -924,11 +591,12 @@ void victory()
 	
 	//int ranking = saveScore(string name, int score);
 	
-	cout << "\n\n\n";
+	system("cls");
 	
 	// Trophy
-	string strs[] = {
-		"   _____________     ",
+	textcolor(YELLOW);
+	printCentralized({
+		"   _____________   ",
 		"  (_____________)    ",
 		"___|           |___  ",
 		"|  |           |  |  ",
@@ -942,55 +610,47 @@ void victory()
 		"     __(___)__       ",
 		"     |///////|       ",
 		"     |_______|       "
-	};
-	
-	textcolor(YELLOW);
-	int x = getPosToCenter(strs[0]);
-	for(string s: strs)
-	{
-		gotoxy(x, wherey() + 1);
-		cout << s;
-	}
+	}, 4);
 	
 	// Ranking text
 	textcolor(LIGHTMAGENTA);
-	string str = "Ranking";
-	x = getPosToCenter(str);
-	gotoxy(x, wherey() + 2);
-	cout << str;
+	printCentralized(
+		"Ranking",
+		wherey() + 2
+	);
 	
 	// Ranking value
 	textcolor(WHITE);
-	str = to_string(ranking);
-	x = getPosToCenter(str);
-	gotoxy(x, wherey() + 1);
-	cout << str;
+	printCentralized(
+		to_string(ranking),
+		wherey() + 1
+	);
 	
 	// Score text
 	textcolor(LIGHTMAGENTA);
-	str = "Score";
-	x = getPosToCenter(str);
-	gotoxy(x, wherey() + 2);
-	cout << str;
+	printCentralized(
+		"Score",
+		wherey() + 2
+	);
 	
 	// Score value
 	textcolor(WHITE);
-	str = to_string(score);
-	x = getPosToCenter(str);
-	gotoxy(x, wherey() + 1);
-	cout << str;
+	printCentralized(
+		to_string(score),
+		wherey() + 1
+	);
 	
 	// Player name text
 	textcolor(LIGHTMAGENTA);
-	str = "Nome de jogador";
-	x = getPosToCenter(str);
-	gotoxy(x, wherey() + 2);
-	cout << str;
+	printCentralized(
+		"Nome de jogador",
+		wherey() + 2
+	);
 	
 	// Player name value
 	textcolor(WHITE);
-	str =  "-----------";
-	x = getPosToCenter(str);
+	string str =  "-----------";
+	int x = getPosToCenter(str.size());
 	
 	gotoxy(x, wherey() + 1);
 	cout << str;
@@ -1045,23 +705,16 @@ void victory()
 // Defeat
 void defeat()
 {
-	cout << "\n\n\n";
+	system("cls");
 	
-	string strs[] = {
+	textcolor(LIGHTRED);
+	printCentralized({
 		" ____   _____  ____  ____  _____  ______  _____ ",
 		"|  _ \\ |  ___||    \\|    \\|  _  ||__  __||     | ",
 		"| | \\ ||  _|  |   _/|   _/| | | |  |  |  |  _  |   ",
 		"| |_/ || |___ |   \\ |   \\ | |_| |  |  |  | | | |  ",
 		"|____/ |_____||_|\\_\\|_|\\_\\|_____|  |__|  |_| |_|"
-	};
-	
-	textcolor(LIGHTRED);
-	int x = getPosToCenter(strs[0]);
-	for(string s: strs)
-	{
-		gotoxy(x, wherey() + 1);
-		cout << s;
-	}
+	}, 4);
 	
 	backToMenuText(wherey() + 2);
 }
@@ -1070,61 +723,55 @@ void defeat()
 void instructions()
 {
 	textcolor(LIGHTMAGENTA);
-	cout << "\n\n\t\t\t\t   INSTRUÇÕES \n\n\n";
+	printCentralized("INSTRUÇÕES", 4);
 	
-	string margin = "\t   ";
-	textcolor(WHITE);
-	cout << margin << "Utilize as setas do teclado ou as teclas ";
-	textcolor(LIGHTMAGENTA);
-	cout << "W";
-	textcolor(WHITE);
-	cout << ", ";
-	textcolor(LIGHTMAGENTA);
-	cout << "A";
-	textcolor(WHITE);
-	cout << ", ";
-	textcolor(LIGHTMAGENTA);
-	cout << "S";
-	textcolor(WHITE);
-	cout << " e ";
-	textcolor(LIGHTMAGENTA);
-	cout << "D";
-	textcolor(WHITE);
-	cout << " para \n";
-	cout << margin << "controlar o ";
-	textcolor(LIGHTMAGENTA);
-	cout << "X";
-	textcolor(WHITE);
-	cout << " no campo da Batalha Naval. \n\n";
+	vector<string> strs = {
+		"Utilize as setas do teclado ou as teclas ",
+		"W", ", ", "A", ", ", "S ", "e ", "D ",
+		"para"
+	};
 	
-	cout << margin << "Aperte ";
-	textcolor(LIGHTMAGENTA);
-	cout << "Enter";
-	textcolor(WHITE);
-	cout << " quando quiser atirar no ponto marcado pelo ";
-	textcolor(LIGHTMAGENTA);
-	cout << "X";
-	textcolor(WHITE);
-	cout << ". \n\n";
+	int size = -1;
+	for(string s: strs)
+		size += s.size() + 1;
+		
+	int x = getPosToCenter(size);
+	vector<COLORS> colors = {WHITE, LIGHTMAGENTA};
 	
-	cout << margin << "O jogo começa com um total de tiros disponiveis definidos \n";
-	cout << margin << "pela dificuldade escolhida pelo jogador. A cada tiro dado \n";
-	cout << margin << "em uma coordenada diferente, sua quantidade de tiros dis- \n";
-	cout << margin << "poníveis diminui. \n\n";
+	gotoxy(x, wherey() + 2);
+	printAlternatingColors(strs, colors);
 	
-	cout << margin << "O jogador vence quando todos os barcos e navios são afun- \n";
-	cout << margin << "dados por  completo antes  que seus  tiros acabem e perde \n";
-	cout << margin << "quando esta condição não é atendida. \n\n";
+	gotoxy(x, wherey() + 1);
+	printAlternatingColors({"controlar o ", "X ", "no campo da Batalha Naval."}, colors);
 	
-	cout << margin << "O ganhador tem sua posição no ranking relativa ao modo de \n";
-	cout << margin << "jogo escolhido no início e à quantidade gasta de tiros.";
+	gotoxy(x, wherey() + 2);
+	printAlternatingColors({"Aperte ", "Enter ", "quando quiser atirar no ponto marcado pelo ", "X", "."}, colors);
 	
-	textcolor(LIGHTMAGENTA);
-	cout << "\n\n\n\n\t\t\t ...";
-	textcolor(WHITE);
-	cout << " APERTE ENTER PARA SAIR ";
-	textcolor(LIGHTMAGENTA);
-	cout << "... \n";
+	gotoxy(x, wherey() + 2);
+	cout << "O jogo começa com um total de tiros disponiveis definidos \n";
+	gotoxy(x, wherey() + 1);
+	cout << "pela dificuldade escolhida pelo jogador. A cada tiro dado \n";
+	gotoxy(x, wherey() + 1);
+	cout << "em uma coordenada diferente, sua quantidade de tiros dis- \n";
+	gotoxy(x, wherey() + 1);
+	cout << "poníveis diminui. \n\n";
+	
+	gotoxy(x, wherey() + 2);
+	cout << "O jogador vence quando todos os barcos e navios são afun- \n";
+	gotoxy(x, wherey() + 1);
+	cout << "dados por  completo antes  que seus  tiros acabem e perde \n";
+	gotoxy(x, wherey() + 1);
+	cout << "quando esta condição não é atendida. \n\n";
+	
+	gotoxy(x, wherey() + 2);
+	cout << "O ganhador tem sua posição no ranking relativa ao modo de \n";
+	gotoxy(x, wherey() + 1);
+	cout << "jogo escolhido no início e à quantidade gasta de tiros.";
+	
+	strs = {"... ", "Aperte ", "ENTER ", "para sair ", "..."};
+	x = getPosToCenter(getBrokenTextSize(strs));
+	gotoxy(x, wherey() + 4);
+	printAlternatingColors(strs, {LIGHTMAGENTA, LIGHTGRAY});
 	
 	hideCursor();
 	waitKey(KEY_ENTER);
@@ -1170,66 +817,45 @@ int main()
 	// Variables
 	int opt = 0;
 	
-	/*
-	float
-		A3  = 220,
-		Bb3 = 233.1,
-		
-		C4  = 261.6,
-		D4  = 293.7,
-		E4  = 329.6,
-		F4  = 349.2,
-		A4  = 440,
-		Bb4 = 466.2,
-		
-		C5 = 523.3,
-		D5 = 587.3,
-		E5 = 659.3,
-		F5 = 698.5;
-	
-	Beep(C4, 300);
-	Beep(F4, 1200);
-	Beep(E4, 300);
-	Beep(F4, 300);
-	Beep(E4, 800);
-	Beep(C4, 800);
-	Beep(A3, 800);
-	Beep(D4, 800);
-	Beep(A3, 800);
-	Beep(Bb3, 800);
-	Beep(C4, 800);
-	*/
-	
 	// Main loop
 	while(true)
 	{
 		system("cls");
 	
-		// MAIN MENÚ
-		string margin = "\t\t ";
+		// TITLE
+		
 		textcolor(LIGHTGRAY);
-		cout << "\n\n\n";
-		cout << margin << " ____  ____  ______  ____  _     _    _  ____   \n";
-		cout << margin << "|°   ||/   ||__  __||°   ||/|   | |__| ||   °|  \n";
-		cout << margin << "| __/ |/__ |  |  |  | __ ||/|   |° __ °|| __ |  \n";
-		cout << margin << "|   \\ |/|| |  |  |  | || ||/|__ | |  | || || | \n";
-		cout << margin << "|°___||/||_|  |__|  |_||_||/___||_|  |_||_||_|  \n";
+		printCentralized({
+			" ____  ____  ______  ____  _     _    _  ____ ",
+			"|°   ||/   ||__  __||°   ||/|   | |__| ||   °|  ",
+			"| __/ |/__ |  |  |  | __ ||/|   |° __ °|| __ |  ",
+			"|   \\ |/|| |  |  |  | || ||/|__ | |  | || || | ",
+			"|°___||/||_|  |__|  |_||_||/___||_|  |_||_||_|  "
+		}, wherey() + 5);
 		
 		textcolor(LIGHTBLUE);
-		cout << margin << "//////////////////////////////////////////////  \n";
+		printCentralized(
+			"//////////////////////////////////////////////",
+			wherey() + 1
+		);
 		
-		margin = "\t\t\t";
 		textcolor(LIGHTGRAY);
-		cout << margin << " ___  _	 ____  _  _  ____  _      \n";
-		cout << margin << "|°  \\| ||   °||/|| ||°   || |	  \n";
-		cout << margin << "|°|\\   || __ ||/|| || __ || |	  \n";
-		cout << margin << "|°| \\  || || ||/\\/ || || || |__  \n";
-		cout << margin << "|°|  \\_||_||°| \\__/ |_||_||____| \n";
+		printCentralized({
+			" ___  _  ____  _  _  ____  _     ",
+			"|°  \\| ||   °||/|| ||°   || |	    ",
+			"|°|\\   || __ ||/|| || __ || |	    ",
+			"|°| \\  || || ||/\\/ || || || |__  ",
+			"|°|  \\_||_||°| \\__/ |_||_||____| "
+		}, wherey());
 		
 		textcolor(LIGHTBLUE);
-		cout << margin << "////////////////////////////////   \n";
+		printCentralized(
+			"////////////////////////////////",
+			wherey() + 1
+		);
 		
-		margin = "\t\t\t  ";
+		// MENÚ
+		
 		textcolor(WHITE);
 		cout << "\n\n\n\n";
 		
