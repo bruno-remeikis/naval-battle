@@ -26,6 +26,7 @@
 #define KEY_LEFT 75
 #define KEY_ENTER 13
 #define KEY_ESC 27
+#define KEY_BACKSPACE 8
 
 #define GAME_WIDTH 25
 #define GAME_HEIGHT 15
@@ -131,6 +132,11 @@ void waitKey(int key)
 		input = getch();
 	}
 	while(input != key);
+}
+
+int getPosToCenter(string str)
+{
+	return WINDOW_WIDTH / 2 - str.size() / 2;
 }
 
 // Gerar embarcação
@@ -307,7 +313,7 @@ int menu(string title, vector<string> options, int opt)
 		border += "-";
 	border += "\n";
 	
-	int x = WINDOW_WIDTH / 2 - border.size() / 2;
+	int x = getPosToCenter(border);
 	
 	// Top border
 	gotoxy(x, wherey());
@@ -384,7 +390,7 @@ int menu(string title, vector<string> options, int opt)
 // Jogo
 GameStatus game()
 {
-	return GameStatus::VICTORY;
+	//return GameStatus::VICTORY;
 	//return GameStatus::DEFEAT;
 	
 	// Matriz do jogo
@@ -881,6 +887,35 @@ GameStatus game()
 	}
 }
 
+void backToMenuText(int y)
+{
+	// Back text
+	textcolor(LIGHTMAGENTA);
+	string strs[] = {
+		"Aperte ",
+		"ENTER ",
+		"para ir ao menú principal"
+	};
+	
+	string str = "";
+	for(string s: strs)
+		str += s;
+	int x = getPosToCenter(str);
+	
+	gotoxy(x, y);
+	for(int i = 0; i < sizeof(strs) / sizeof(*strs); i++)
+	{
+		if(i % 2 == 0)
+			textcolor(WHITE);
+		else
+			textcolor(LIGHTMAGENTA);
+			
+		cout << strs[i];
+	}
+	
+	waitKey(KEY_ENTER);
+}
+
 // Victory
 void victory()
 {
@@ -889,39 +924,89 @@ void victory()
 	
 	//int ranking = saveScore(string name, int score);
 	
-	system("cls");
-	
-	string left = "\n\t\t\t  ";
 	cout << "\n\n\n";
 	
+	// Trophy
+	string strs[] = {
+		"   _____________     ",
+		"  (_____________)    ",
+		"___|           |___  ",
+		"|  |           |  |  ",
+		"|  | PARABÉNS! |  |  ",
+		"|  |           |  |  ",
+		" \\__\\         /__/ ",
+		"     \\_______/      ",
+		"       (___)         ",
+		"        | |          ",
+		"        |_|          ",
+		"     __(___)__       ",
+		"     |///////|       ",
+		"     |_______|       "
+	};
+	
 	textcolor(YELLOW);
-	cout << left << "   _____________     ";
-	cout << left << "  (_____________)    ";
-	cout << left << "___|           |___  ";
-	cout << left << "|  |           |  |  ";
-	cout << left << "|  | PARABÉNS! |  |  ";
-	cout << left << "|  |           |  |  ";
-	cout << left << " \\__\\         /__/ ";
-	cout << left << "     \\_______/      ";
-	cout << left << "       (___)         ";
-	cout << left << "        | |          ";
-	cout << left << "        |_|          ";
-	cout << left << "     __(___)__       ";
-	cout << left << "     |///////|       ";
-	cout << left << "     |_______|       ";
+	int x = getPosToCenter(strs[0]);
+	for(string s: strs)
+	{
+		gotoxy(x, wherey() + 1);
+		cout << s;
+	}
 	
-	cout << "\n\n";
-	cout << left << "  Ranking: " << ranking;
-	cout << left << "  Score:   " << score;
+	// Ranking text
+	textcolor(LIGHTMAGENTA);
+	string str = "Ranking";
+	x = getPosToCenter(str);
+	gotoxy(x, wherey() + 2);
+	cout << str;
 	
-	cout << left << "Nome de jogador:";
-	cout << left << "-----------";
-	cout << left << "| ";
+	// Ranking value
+	textcolor(WHITE);
+	str = to_string(ranking);
+	x = getPosToCenter(str);
+	gotoxy(x, wherey() + 1);
+	cout << str;
+	
+	// Score text
+	textcolor(LIGHTMAGENTA);
+	str = "Score";
+	x = getPosToCenter(str);
+	gotoxy(x, wherey() + 2);
+	cout << str;
+	
+	// Score value
+	textcolor(WHITE);
+	str = to_string(score);
+	x = getPosToCenter(str);
+	gotoxy(x, wherey() + 1);
+	cout << str;
+	
+	// Player name text
+	textcolor(LIGHTMAGENTA);
+	str = "Nome de jogador";
+	x = getPosToCenter(str);
+	gotoxy(x, wherey() + 2);
+	cout << str;
+	
+	// Player name value
+	textcolor(WHITE);
+	str =  "-----------";
+	x = getPosToCenter(str);
+	
+	gotoxy(x, wherey() + 1);
+	cout << str;
+	
+	gotoxy(x, wherey() + 1);
+	cout << "| ";
 	int xName = wherex();
 	int yName = wherey();
 	cout << ". . . . |";
-	cout << left << "-----------";
 	
+	gotoxy(x, wherey() + 1);
+	cout << "-----------";
+	
+	int y = wherey();
+	
+	// Player name input
 	string nome = "";
 	while(true)
 	{
@@ -929,9 +1014,9 @@ void victory()
 		
 		int c = getch();
 		
-		if(((c >= 48 && c <= 57)   // <- Número
-		||  (c >= 65 && c <= 90)   // <- Maiúscula
-		||  (c >= 97 && c <= 122)) // <- Minúscula
+		if(((c >= 48 && c <= 57)   // <- Number
+		||  (c >= 65 && c <= 90)   // <- Uppercase
+		||  (c >= 97 && c <= 122)) // <- Lowercase
 		&& nome.size() < 4) 
 		{
 			nome += (char) c;
@@ -939,47 +1024,46 @@ void victory()
 			gotoxy(xName + (nome.size() - 1) * 2, yName);
 			cout << (char) c;
 		}
-		// Apagar
-		else if(c == 8 && nome.size() > 0)
+		// Delete
+		else if(c == KEY_BACKSPACE && nome.size() > 0)
 		{
 			gotoxy(xName + (nome.size() - 1) * 2, yName);
 			cout << ".";
 			
 			nome.pop_back();
 		}
+		// Continue
+		else if(c == KEY_ENTER && nome.size() == 4)
+		{
+			break;
+		}
 	}
 	
-	cout << "\n\n";
-	cout << left << "APERTE ";
-	textcolor(LIGHTMAGENTA);
-	cout << "ENTER";
-	textcolor(WHITE);
-	cout << " PARA IR AO MENÚ PRINCIPAL";
-	
-	waitKey(KEY_ENTER);
+	backToMenuText(y + 4);
 }
 
 // Defeat
 void defeat()
 {
-	textcolor(RED);
+	cout << "\n\n\n";
 	
-	string left = "\n\t\t";
+	string strs[] = {
+		" ____   _____  ____  ____  _____  ______  _____ ",
+		"|  _ \\ |  ___||    \\|    \\|  _  ||__  __||     | ",
+		"| | \\ ||  _|  |   _/|   _/| | | |  |  |  |  _  |   ",
+		"| |_/ || |___ |   \\ |   \\ | |_| |  |  |  | | | |  ",
+		"|____/ |_____||_|\\_\\|_|\\_\\|_____|  |__|  |_| |_|"
+	};
 	
-	cout << left << " ____   _____  ____  ____  _____  ______  _____     ";
-	cout << left << "|  _ \\ |  ___||    \\|    \\|  _  ||__  __||     | ";
-	cout << left << "| | \\ ||  _|  |   _/|   _/| | | |  |  |  |  _  |   ";
-	cout << left << "| |_/ || |___ |   \\ |   \\ | |_| |  |  |  | | | |  ";
-	cout << left << "|____/ |_____||_|\\_\\|_|\\_\\|_____|  |__|  |_| |_|";
+	textcolor(LIGHTRED);
+	int x = getPosToCenter(strs[0]);
+	for(string s: strs)
+	{
+		gotoxy(x, wherey() + 1);
+		cout << s;
+	}
 	
-	cout << "\n\n";
-	cout << left << "APERTE ";
-	textcolor(LIGHTMAGENTA);
-	cout << "ENTER";
-	textcolor(WHITE);
-	cout << " PARA IR AO MENÚ PRINCIPAL";
-	
-	waitKey(KEY_ENTER);
+	backToMenuText(wherey() + 2);
 }
 
 // Instruções
