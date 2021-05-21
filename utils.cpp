@@ -322,16 +322,14 @@ void printCentralized(string str, int y)
 // Show a centralized visual element (multiple lines)
 void printCentralized(vector<string> strs, int y)
 {
-	//gotoxy(wherex(), y - 1);
-	
 	if(!strs.empty())
 	{
 		int x = getPosToCenter(strs.at(0).size());
 		
-		for(string s: strs)
+		for(int i = 0; i < strs.size(); i++)
 		{
-			gotoxy(x, wherey() + 1); // <- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 'y' não está sendo utilizado e, quando utilizado, dá bug
-			cout << s;
+			gotoxy(x, y + i);
+			cout << strs.at(i);
 		}
 	}
 }

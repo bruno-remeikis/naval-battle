@@ -846,7 +846,7 @@ int main()
 			"|院\\   || __ ||/|| || __ || |	    ",
 			"|院 \\  || || ||/\\/ || || || |__  ",
 			"|院  \\_||_||院 \\__/ |_||_||____| "
-		}, wherey());
+		}, wherey() + 1);
 		
 		textcolor(LIGHTBLUE);
 		printCentralized(
