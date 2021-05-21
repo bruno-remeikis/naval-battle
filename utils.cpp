@@ -1,44 +1,5 @@
 // FUNCTIONS
 
-/*
-void gotoxy2(int x, int y)
-{
-	SetConsoleCursorPosition(
-		GetStdHandle(STD_OUTPUT_HANDLE),
-		(COORD) {x - 1, y - 1}
-	);
-}
-
-int wherex2()
-{
-    CONSOLE_SCREEN_BUFFER_INFO con;
-    HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-    if(hcon != INVALID_HANDLE_VALUE &&
-        GetConsoleScreenBufferInfo(hcon,&con)) 
-    {
-        return con.dwCursorPosition.X;
-    }
-    
-    return 0;
-}
-
-int wherey2()
-{
-	int pos[2];
-    CONSOLE_SCREEN_BUFFER_INFO con;
-    HANDLE hcon = GetStdHandle(STD_OUTPUT_HANDLE);
-    
-    if(hcon != INVALID_HANDLE_VALUE &&
-    	GetConsoleScreenBufferInfo(hcon,&con)) 
-    {
-        return con.dwCursorPosition.Y;
-    }
-    
-    return 0;
-}
-*/
-
 // Stops the system until the key passed is pressed
 void waitKey(int key)
 {
@@ -171,8 +132,7 @@ list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
 				// Sair dos loops e passar para próxima embarcação
 				if(freeWay)
 				{
-					Embarcacao* e = new Embarcacao(tipoAtual);
-					//Peca* pecas[tipoAtual->getSize()];
+					Embarcacao *e = new Embarcacao(tipoAtual);
 					list<Peca*> pecas;
 					
 					for(int iC = 0; iC < sizeof(coords) / sizeof(*coords); iC++)
@@ -182,7 +142,6 @@ list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
 						
 						field[i][j].setEmbarcacao(e);
 						
-						//pecas[iC] = &field[i][j];
 						pecas.push_back(&field[i][j]);
 					}
 					
@@ -320,6 +279,7 @@ void printCentralized(string str, int y)
 }
 
 // Show a centralized visual element (multiple lines)
+// Uses the size of the first item in the vector as a base
 void printCentralized(vector<string> strs, int y)
 {
 	if(!strs.empty())

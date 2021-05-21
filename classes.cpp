@@ -117,7 +117,7 @@ class Tipo
 class Peca
 {
 	private:
-		Embarcacao* embarcacao = nullptr;
+		Embarcacao *embarcacao = nullptr;
 		bool revealed = false;
 	public:
 		Embarcacao* getEmbarcacao()
@@ -125,7 +125,7 @@ class Peca
 			return embarcacao;
 		}
 		
-		void setEmbarcacao(Embarcacao* embarcacao)
+		void setEmbarcacao(Embarcacao *embarcacao)
 		{
 			this->embarcacao = embarcacao;
 		}
@@ -150,15 +150,15 @@ class Peca
 class Embarcacao
 {
 	private:
-		Tipo* tipo;
+		Tipo *tipo;
 		list<Peca*> pecas;
 	public:
-		Embarcacao(Tipo* tipo)
+		Embarcacao(Tipo *tipo)
 		{
 			this->tipo = tipo;
 		}
 		
-		Tipo* getTipo()
+		Tipo *getTipo()
 		{
 			return tipo;
 		}
@@ -176,7 +176,7 @@ class Embarcacao
 		// Retorna 'true' se todas as peças foram reveladas
 		bool isSunk()
 		{
-			for(Peca* p: pecas)
+			for(Peca *p: pecas)
 				if(!p->isRevealed())
 					return false;
 					
