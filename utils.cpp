@@ -158,16 +158,98 @@ list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
 	return ships;
 }
 
-// Returns the positon in the ranking
-int saveScore(string name, int score)
+// Returns the score cut from a line
+int getScore(string line)
 {
+	// In `name - score` format, finds the '-', add 1 to remove the ' ', cuts the string to get just the score and convert it to integer
+	return stoi(line.substr(line.find('-') + 1));
+}
+
+// Returns the score position in the ranking
+int getRanking(int score)
+{
+	// Read score file
+	string line;
+	int ranking = 0;
+	
+	ifstream outFile("score.txt");
+	if(outFile.is_open())
+	{
+		while(getline(outFile, line))
+		{
+			if(score < getScore(line))
+				return ranking;
+			
+			ranking++;
+		}
+		
+		outFile.close();
+	}
+	
+	return ranking;
+}
+
+// Saves the player score in the document
+void saveScore(string name, int score, int ranking)
+{
+	// Read score file
+	string line;
+	ifstream outFile("score.txt");
+	if(outFile.is_open())
+	{
+		while(getline(outFile, line))
+		{
+			cout << line << '\n';
+		}
+		
+		outFile.close();
+	}
+	
+	waitKey(KEY_ENTER);
+	
+	/*
+	// Read score file
+	string line;
+	int i = 0;
+	
+	ifstream outFile("score.txt");
+	ofstream inFile("score.txt");
+	
+	if(outFile.is_open())
+	{
+		bool empty = true;
+		
+		while(getline(outFile, line))
+		{
+			cout << "a";
+			
+			empty = false;
+			
+			if(i != ranking)
+				inFile << line;
+			else
+				inFile << name << " - " << score;
+			
+			i++;
+		}
+			
+		if(empty)
+			inFile << name << " - " << score;
+		
+		//inFile << "TESTE";
+		
+		outFile.close();
+		inFile.close();
+	}
+	*/
+	
+	/*
 	// Write score file
 	ofstream inFile;
 	inFile.open("score.txt");
 	inFile << name << " - " << score;
 	inFile.close();
-	
-	return 0;
+	*/
 }
 
 

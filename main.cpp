@@ -584,12 +584,9 @@ void backToMenuText(int y)
 }
 
 // Victory
-void victory()
+void victory(int score)
 {
-	int ranking = 1;
-	int score = 100;
-	
-	//int ranking = saveScore(string name, int score);
+	int ranking = getRanking(score);
 	
 	system("cls");
 	
@@ -667,7 +664,7 @@ void victory()
 	int y = wherey();
 	
 	// Player name input
-	string nome = "";
+	string name = "";
 	while(true)
 	{
 		hideCursor();
@@ -677,27 +674,32 @@ void victory()
 		if(((c >= 48 && c <= 57)   // <- Number
 		||  (c >= 65 && c <= 90)   // <- Uppercase
 		||  (c >= 97 && c <= 122)) // <- Lowercase
-		&& nome.size() < 4) 
+		&& name.size() < 4) 
 		{
-			nome += (char) c;
+			name += (char) c;
 			
-			gotoxy(xName + (nome.size() - 1) * 2, yName);
+			gotoxy(xName + (name.size() - 1) * 2, yName);
 			cout << (char) c;
 		}
 		// Delete
-		else if(c == KEY_BACKSPACE && nome.size() > 0)
+		else if(c == KEY_BACKSPACE && name.size() > 0)
 		{
-			gotoxy(xName + (nome.size() - 1) * 2, yName);
+			gotoxy(xName + (name.size() - 1) * 2, yName);
 			cout << ".";
 			
-			nome.pop_back();
+			name.pop_back();
 		}
 		// Continue
-		else if(c == KEY_ENTER && nome.size() == 4)
+		else if(c == KEY_ENTER && name.size() == 4)
 		{
 			break;
 		}
 	}
+	
+	// Save score to file
+	cout << "Saving score...";
+	saveScore(name, score, ranking);
+	cout << "...End";
 	
 	backToMenuText(y + 4);
 }
@@ -792,6 +794,8 @@ void ranking()
 		
 		outFile.close();
 	}
+	
+	waitKey(KEY_ENTER);
 }
 
 
@@ -879,7 +883,7 @@ int main()
 				switch(game())
 				{
 					case GameStatus::VICTORY:
-						victory();
+						victory(50);
 						break;
 						
 					case GameStatus::DEFEAT:
