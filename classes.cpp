@@ -1,18 +1,3 @@
-//#include <iostream>
-#include <conio2.h>  // <- Use gotoxy and colors
-
-/*
-#include <iostream>  // <- Input and output
-#include <locale>    // <- Change language
-#include <windows.h> // <- Redimention window
-#include <conio2.h>  // <- Use gotoxy and colors
-#include <cstdlib>   // <- Use random
-#include <list>		 // <- Use list
-#include <vector>	 // <- Use vector
-#include <iterator>  // <- Manipulate list
-#include <ctime>	 // <- Use time in random numbers
-*/
-
 using namespace std;
 
 // CLASSES
@@ -181,5 +166,86 @@ class Embarcacao
 					return false;
 					
 			return true;
+		}
+};
+
+// Patent
+class Patent
+{
+	private:
+		string name;
+		COLORS color;
+		int min = 0;
+		int max = -1;
+	public:
+		static const int infinite = -1;
+		
+		Patent(string name, COLORS color, int min, int max)
+		{
+			this->name = name;
+			this->color = color;
+			this->min = min;
+			this->max = max;
+		}
+		
+		string getName()
+		{
+			return name;
+		}
+		
+		COLORS getColor()
+		{
+			return color;
+		}
+		
+		int getMin()
+		{
+			return min;
+		}
+		
+		int getMax()
+		{
+			return max;
+		}
+		
+		bool isMaxInfinite()
+		{
+			return max == infinite;
+		}
+		
+		bool isInRange(int score)
+		{
+			return score >= min && (score <= max || isMaxInfinite());
+		}
+};
+
+// Player
+class Player
+{
+	private:
+		string name;
+		int score;
+		Patent *patent;
+	public:
+		Player(string name, int score, Patent *patent)
+		{
+			this->name = name;
+			this->score = score;
+			this->patent = patent;
+		}
+		
+		string getName()
+		{
+			return name;
+		}
+		
+		int getScore()
+		{
+			return score;
+		}
+		
+		Patent* getPatent()
+		{
+			return patent;
 		}
 };

@@ -60,17 +60,13 @@ Tipo *tipos[] = {
 	new Tipo("Porta-aviões", 1, 4, '5', YELLOW   ),
 };
 
-
-
-
-
-// ENUMS
-
-enum GameStatus
-{
-	VICTORY,
-	DEFEAT,
-	EXIT
+// Patentes pré-definidas
+Patent *patents[] = {
+	new Patent("Marinheiro", YELLOW   , 0  , 88  ),
+	new Patent("Tenente"   , GREEN    , 89 , 152 ),
+	new Patent("Capitão"   , LIGHTBLUE, 153, 216 ),
+	new Patent("Almirante" , LIGHTRED , 217, 280 ),
+	new Patent("Pirata"    , MAGENTA  , 281, Patent::infinite),
 };
 
 
@@ -79,12 +75,161 @@ enum GameStatus
 
 // INTERFACE FUNCTIONS
 
-// Jogo
-GameStatus game()
+// Victory
+void victory(int score)
 {
-	return GameStatus::VICTORY;
-	//return GameStatus::DEFEAT;
+	int ranking = getRanking(score);
 	
+	system("cls");
+	
+	// Trophy
+	textcolor(YELLOW);
+	printCentralized({
+		"   _____________   ",
+		"  (_____________)    ",
+		"___|           |___  ",
+		"|  |           |  |  ",
+		"|  | PARABÉNS! |  |  ",
+		"|  |           |  |  ",
+		" \\__\\         /__/ ",
+		"     \\_______/      ",
+		"       (___)         ",
+		"        | |          ",
+		"        |_|          ",
+		"     __(___)__       ",
+		"     |///////|       ",
+		"     |_______|       "
+	}, 4);
+	
+	// Ranking text
+	textcolor(LIGHTMAGENTA);
+	printCentralized(
+		"Ranking",
+		wherey() + 2
+	);
+	
+	// Ranking value
+	textcolor(WHITE);
+	printCentralized(
+		to_string(ranking),
+		wherey() + 1
+	);
+	
+	// Score text
+	textcolor(LIGHTMAGENTA);
+	printCentralized(
+		"Score",
+		wherey() + 2
+	);
+	
+	// Score value
+	textcolor(WHITE);
+	printCentralized(
+		to_string(score),
+		wherey() + 1
+	);
+	
+	// Player name text
+	textcolor(LIGHTMAGENTA);
+	printCentralized(
+		"Nome de jogador",
+		wherey() + 2
+	);
+	
+	// Player name value
+	textcolor(WHITE);
+	string str =  "-----------";
+	int x = getPosToCenter(str.size());
+	
+	gotoxy(x, wherey() + 1);
+	cout << str;
+	
+	gotoxy(x, wherey() + 1);
+	cout << "| ";
+	int xName = wherex();
+	int yName = wherey();
+	cout << ". . . . |";
+	
+	gotoxy(x, wherey() + 1);
+	cout << "-----------";
+	
+	int y = wherey();
+	
+	// Player name input
+	string name = "";
+	while(true)
+	{
+		hideCursor();
+		
+		int c = getch();
+		
+		if(((c >= 48 && c <= 57)   // <- Number
+		||  (c >= 65 && c <= 90)   // <- Uppercase
+		||  (c >= 97 && c <= 122)) // <- Lowercase
+		&& name.size() < 4) 
+		{
+			name += (char) c;
+			
+			gotoxy(xName + (name.size() - 1) * 2, yName);
+			cout << (char) c;
+		}
+		// Delete
+		else if(c == KEY_BACKSPACE && name.size() > 0)
+		{
+			gotoxy(xName + (name.size() - 1) * 2, yName);
+			cout << ".";
+			
+			name.pop_back();
+		}
+		// Continue
+		else if(c == KEY_ENTER && name.size() == 4)
+		{
+			break;
+		}
+	}
+	
+	// Save score to file
+	cout << "Saving score...";
+	saveScore(name, score, ranking);
+	cout << "...End";
+	
+	// Back
+	printCentralizedAndAlternatingColors(
+		{"Aperte ", "ENTER ", "para ir ao menú principal"},
+		{WHITE, LIGHTMAGENTA},
+		y + 4
+	);
+	hideCursor();
+	waitKey(KEY_ENTER);
+}
+
+// Defeat
+void defeat()
+{
+	system("cls");
+	
+	textcolor(LIGHTRED);
+	printCentralized({
+		" ____   _____  ____  ____  _____  ______  _____ ",
+		"|  _ \\ |  ___||    \\|    \\|  _  ||__  __||     | ",
+		"| | \\ ||  _|  |   _/|   _/| | | |  |  |  |  _  |   ",
+		"| |_/ || |___ |   \\ |   \\ | |_| |  |  |  | | | |  ",
+		"|____/ |_____||_|\\_\\|_|\\_\\|_____|  |__|  |_| |_|"
+	}, 4);
+	
+	// Back
+	printCentralizedAndAlternatingColors(
+		{"Aperte ", "ENTER ", "Para ir ao menú principal"},
+		{WHITE, LIGHTMAGENTA},
+		wherey() + 4
+	);
+	hideCursor();
+	waitKey(KEY_ENTER);
+}
+
+// Jogo
+void game()
+{
 	// Matriz do jogo
 	Peca field[GAME_WIDTH][GAME_HEIGHT];
 	
@@ -373,7 +518,7 @@ GameStatus game()
 					movingCursor = false; // <- Exit loop
 					
 					if(opt == 1)
-						return GameStatus::EXIT;
+						return;
 					
 					break;
 				// Enter
@@ -386,7 +531,10 @@ GameStatus game()
 						tiros--;
 						
 						if(tiros == 0)
-							return GameStatus::DEFEAT;
+						{
+							defeat();
+							return;
+						}
 						
 						textcolor(WHITE);
 						gotoxy(xTiros, yTiros);
@@ -451,7 +599,10 @@ GameStatus game()
 									
 								// Check if the game is over
 								if(shipsNotSunk.empty())
-									return GameStatus::VICTORY;
+								{
+									victory(200);
+									return;
+								}
 								
 								// Shot status
 								Tipo* tipo = field[x][y].getEmbarcacao()->getTipo();
@@ -561,6 +712,7 @@ GameStatus game()
 	}
 }
 
+/*
 void backToMenuText(int y)
 {
 	// Back text
@@ -582,144 +734,7 @@ void backToMenuText(int y)
 	
 	waitKey(KEY_ENTER);
 }
-
-// Victory
-void victory(int score)
-{
-	int ranking = getRanking(score);
-	
-	system("cls");
-	
-	// Trophy
-	textcolor(YELLOW);
-	printCentralized({
-		"   _____________   ",
-		"  (_____________)    ",
-		"___|           |___  ",
-		"|  |           |  |  ",
-		"|  | PARABÉNS! |  |  ",
-		"|  |           |  |  ",
-		" \\__\\         /__/ ",
-		"     \\_______/      ",
-		"       (___)         ",
-		"        | |          ",
-		"        |_|          ",
-		"     __(___)__       ",
-		"     |///////|       ",
-		"     |_______|       "
-	}, 4);
-	
-	// Ranking text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Ranking",
-		wherey() + 2
-	);
-	
-	// Ranking value
-	textcolor(WHITE);
-	printCentralized(
-		to_string(ranking),
-		wherey() + 1
-	);
-	
-	// Score text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Score",
-		wherey() + 2
-	);
-	
-	// Score value
-	textcolor(WHITE);
-	printCentralized(
-		to_string(score),
-		wherey() + 1
-	);
-	
-	// Player name text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Nome de jogador",
-		wherey() + 2
-	);
-	
-	// Player name value
-	textcolor(WHITE);
-	string str =  "-----------";
-	int x = getPosToCenter(str.size());
-	
-	gotoxy(x, wherey() + 1);
-	cout << str;
-	
-	gotoxy(x, wherey() + 1);
-	cout << "| ";
-	int xName = wherex();
-	int yName = wherey();
-	cout << ". . . . |";
-	
-	gotoxy(x, wherey() + 1);
-	cout << "-----------";
-	
-	int y = wherey();
-	
-	// Player name input
-	string name = "";
-	while(true)
-	{
-		hideCursor();
-		
-		int c = getch();
-		
-		if(((c >= 48 && c <= 57)   // <- Number
-		||  (c >= 65 && c <= 90)   // <- Uppercase
-		||  (c >= 97 && c <= 122)) // <- Lowercase
-		&& name.size() < 4) 
-		{
-			name += (char) c;
-			
-			gotoxy(xName + (name.size() - 1) * 2, yName);
-			cout << (char) c;
-		}
-		// Delete
-		else if(c == KEY_BACKSPACE && name.size() > 0)
-		{
-			gotoxy(xName + (name.size() - 1) * 2, yName);
-			cout << ".";
-			
-			name.pop_back();
-		}
-		// Continue
-		else if(c == KEY_ENTER && name.size() == 4)
-		{
-			break;
-		}
-	}
-	
-	// Save score to file
-	cout << "Saving score...";
-	saveScore(name, score, ranking);
-	cout << "...End";
-	
-	backToMenuText(y + 4);
-}
-
-// Defeat
-void defeat()
-{
-	system("cls");
-	
-	textcolor(LIGHTRED);
-	printCentralized({
-		" ____   _____  ____  ____  _____  ______  _____ ",
-		"|  _ \\ |  ___||    \\|    \\|  _  ||__  __||     | ",
-		"| | \\ ||  _|  |   _/|   _/| | | |  |  |  |  _  |   ",
-		"| |_/ || |___ |   \\ |   \\ | |_| |  |  |  | | | |  ",
-		"|____/ |_____||_|\\_\\|_|\\_\\|_____|  |__|  |_| |_|"
-	}, 4);
-	
-	backToMenuText(wherey() + 2);
-}
+*/
 
 // Instruções
 void instructions()
@@ -727,21 +742,18 @@ void instructions()
 	textcolor(LIGHTMAGENTA);
 	printCentralized("INSTRUÇÕES", 4);
 	
-	vector<string> strs = {
-		"Utilize as setas do teclado ou as teclas ",
-		"W", ", ", "A", ", ", "S ", "e ", "D ",
-		"para"
-	};
-	
-	int size = -1;
-	for(string s: strs)
-		size += s.size() + 1;
-		
-	int x = getPosToCenter(size);
 	vector<COLORS> colors = {WHITE, LIGHTMAGENTA};
 	
-	gotoxy(x, wherey() + 2);
-	printAlternatingColors(strs, colors);
+	int x = printCentralizedAndAlternatingColors({
+		{
+			"Utilize as setas do teclado ou as teclas ",
+			"W", ", ", "A", ", ", "S ", "e ", "D ",
+			"para"
+		},
+		{
+			"controlar o ", "X ", "no campo da Batalha Naval."
+		}
+	}, colors, wherey() + 2);
 	
 	gotoxy(x, wherey() + 1);
 	printAlternatingColors({"controlar o ", "X ", "no campo da Batalha Naval."}, colors);
@@ -749,32 +761,91 @@ void instructions()
 	gotoxy(x, wherey() + 2);
 	printAlternatingColors({"Aperte ", "Enter ", "quando quiser atirar no ponto marcado pelo ", "X", "."}, colors);
 	
-	gotoxy(x, wherey() + 2);
-	cout << "O jogo começa com um total de tiros disponiveis definidos \n";
-	gotoxy(x, wherey() + 1);
-	cout << "pela dificuldade escolhida pelo jogador. A cada tiro dado \n";
-	gotoxy(x, wherey() + 1);
-	cout << "em uma coordenada diferente, sua quantidade de tiros dis- \n";
-	gotoxy(x, wherey() + 1);
-	cout << "poníveis diminui. \n\n";
+	printCentralized({
+		"O jogo começa com um total de tiros disponiveis definidos",
+		"pela dificuldade escolhida pelo jogador. A cada tiro dado",
+		"em uma coordenada diferente, sua quantidade de tiros dis-",
+		"poníveis diminui.",
+		"",
+		"O jogador vence quando todos os barcos e navios são afun-",
+		"dados por  completo antes  que seus  tiros acabem e perde",
+		"quando esta condição não é atendida.",
+		"",
+		"O ganhador tem sua posição no ranking relativa ao modo de",
+		"jogo escolhido no início e à quantidade gasta de tiros."
+	}, wherey() + 2);
 	
-	gotoxy(x, wherey() + 2);
-	cout << "O jogador vence quando todos os barcos e navios são afun- \n";
-	gotoxy(x, wherey() + 1);
-	cout << "dados por  completo antes  que seus  tiros acabem e perde \n";
-	gotoxy(x, wherey() + 1);
-	cout << "quando esta condição não é atendida. \n\n";
+	// Back
+	printCentralizedAndAlternatingColors(
+		{"Aperte ", "ENTER ", "para retornar ao menú principal"},
+		{WHITE, LIGHTMAGENTA},
+		wherey() + 4
+	);
+	hideCursor();
+	waitKey(KEY_ENTER);
+}
+
+// Ranking Informations
+void rankingInfo()
+{
+	system("cls");
 	
-	gotoxy(x, wherey() + 2);
-	cout << "O ganhador tem sua posição no ranking relativa ao modo de \n";
-	gotoxy(x, wherey() + 1);
-	cout << "jogo escolhido no início e à quantidade gasta de tiros.";
+	textcolor(LIGHTMAGENTA);
+	printCentralized("Patentes", 4);
 	
-	strs = {"... ", "Aperte ", "ENTER ", "para sair ", "..."};
-	x = getPosToCenter(getBrokenTextSize(strs));
-	gotoxy(x, wherey() + 4);
-	printAlternatingColors(strs, {LIGHTMAGENTA, LIGHTGRAY});
+	textcolor(WHITE);
+	printCentralized({
+		"As patentes  são classificações  de honra",
+		"dadas aos pertencentes do Ranking. A cor,",
+		"cujo seu  nome apresenta, classifica-o em",
+		"uma patente, sendo:\n"
+	}, wherey() + 2);
 	
+	string
+		divisor = " - ";
+		
+	int
+		nameSize  = 0,
+		scoreSize = 0;
+	
+	for(Patent *p: patents)
+	{
+		if(p->getName().size() > nameSize)
+			nameSize = p->getName().size();
+		
+		int thisScoreSize = to_string(p->getMin()).size() + (p->getMax() != -1 ? to_string(p->getMax()).size() + strlen(" a  pontos") : strlen("+ pontos"));
+		if(thisScoreSize > scoreSize)
+			scoreSize = thisScoreSize;
+	}
+	
+	int x = getPosToCenter(nameSize + scoreSize + divisor.size());
+	
+	for(Patent *p: patents)
+	{
+		textcolor(p->getColor());
+		
+		gotoxy(x, wherey() + 1);
+		cout << p->getName();
+		
+		gotoxy(x + nameSize, wherey());
+		
+		textcolor(WHITE);
+		cout << divisor;
+		
+		textcolor(p->getColor());
+		cout << p->getMin();
+		if(p->getMax() != -1)
+			cout << " a " << p->getMax();
+		else
+			cout << "+";
+		cout << " pontos";
+	}
+	
+	printCentralizedAndAlternatingColors(
+		{"Aperte ", "ENTER ", "para retornar ao ranking"},
+		{WHITE, LIGHTMAGENTA},
+		wherey() + 3
+	);
 	hideCursor();
 	waitKey(KEY_ENTER);
 }
@@ -782,20 +853,99 @@ void instructions()
 // Ranking
 void ranking()
 {
+	system("cls");
+	
 	// Read score file
 	string line;
+	int i = 1;
+	
+	vector<Player*> players;
+	
 	ifstream outFile("score.txt");
 	if(outFile.is_open())
 	{
 		while(getline(outFile, line))
 		{
-			cout << line << '\n';
+			int divisor = line.find("-");
+			
+			string name = line.substr(0, divisor - 1);
+			int score = stoi(line.substr(divisor + 1));
+			
+			for(Patent *p: patents)
+				if(p->isInRange(score))
+				{
+					players.push_back(new Player(name, score, p));
+					break;
+				}
 		}
 		
 		outFile.close();
 	}
 	
-	waitKey(KEY_ENTER);
+	// Loop to get out of 'rankingInfo()'
+	while(true)
+	{
+		system("cls");
+	
+		textcolor(LIGHTRED);
+		printCentralized({
+			"-----------",
+			"| RANKING | ",
+			"-----------"
+		}, 4);
+		
+		printCentralized({
+			"////////////////////////////////////",
+			"------------------------------------",
+			""
+		}, wherey() + 2);
+		
+		int x;
+		for(int i = 0; i < players.size() && i < 3; i++)
+		{
+			Player *p = players.at(i);
+			
+			string txt = to_string(i + 1) + "° - " + p->getName() + " - " + to_string(p->getScore());
+			if(i == 0)
+				x = getPosToCenter(txt.size());
+			
+			gotoxy(x, wherey() + 1);
+			textcolor(p->getPatent()->getColor());
+			cout << txt;
+		}
+		
+		textcolor(WHITE);
+		for(int i = players.size() + 1; i <= 3; i++)
+		{
+			string txt = to_string(i) + "° - .... - ?";
+			if(i == 0)
+				x = getPosToCenter(txt.size());
+				
+			gotoxy(x, wherey() + 1);
+			cout << txt;
+		}
+		
+		textcolor(LIGHTRED);
+		printCentralized({
+			"------------------------------------",
+			"////////////////////////////////////",
+			""
+		}, wherey() + 2);
+		
+		// Exit or show more informations
+		printCentralizedAndAlternatingColors({
+			{"Aperte ", "ENTER ", "para voltar ao ranking"},
+			{"Aperte ", "ESC   ", "para mais informações"}
+		}, {WHITE, LIGHTMAGENTA}, wherey() + 2);
+		
+		hideCursor();
+		int key = waitKeys({KEY_ENTER, KEY_ESC});
+	
+		if(key == KEY_ESC)
+			rankingInfo();
+		else
+			return;
+	}
 }
 
 
@@ -880,16 +1030,7 @@ int main()
 		{
 			// New game
 			case 0:
-				switch(game())
-				{
-					case GameStatus::VICTORY:
-						victory(50);
-						break;
-						
-					case GameStatus::DEFEAT:
-						defeat();
-						break;
-				}
+				game();
 				break;
 			// Instructions
 			case 1:

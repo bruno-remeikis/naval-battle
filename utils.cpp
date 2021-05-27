@@ -1,6 +1,6 @@
 // FUNCTIONS
 
-// Stops the system until the key passed is pressed
+// Stops the system until the passed key is pressed
 void waitKey(int key)
 {
 	char input;
@@ -10,6 +10,21 @@ void waitKey(int key)
 		input = getch();
 	}
 	while(input != key);
+}
+
+// Stops the system until one of the passed keys is pressed
+int waitKeys(vector<int> keys)
+{
+	char input;
+	
+	while(true)
+	{
+		input = getch();
+		
+		for(int key: keys)
+			if(input == key)
+				return key;
+	}
 }
 
 // Returns the x position needed to center a string
@@ -352,28 +367,15 @@ int menu(string title, vector<string> options, int opt)
 	return opt2;
 }
 
-// Show a centralized visual element (single line)
-void printCentralized(string str, int y)
+// Returns the size of a broken text
+// Considers that the strings have no spaces between their parts
+int getBrokenTextSize(vector<string> strs)
 {
-	int x = getPosToCenter(str.size());
-	gotoxy(x, y);
-	cout << str;
-}
-
-// Show a centralized visual element (multiple lines)
-// Uses the size of the first item in the vector as a base
-void printCentralized(vector<string> strs, int y)
-{
-	if(!strs.empty())
-	{
-		int x = getPosToCenter(strs.at(0).size());
+	int size = 0;
+	for(string s: strs)
+		size += s.size();
 		
-		for(int i = 0; i < strs.size(); i++)
-		{
-			gotoxy(x, y + i);
-			cout << strs.at(i);
-		}
-	}
+	return size;
 }
 
 // Receive a broken text and print it, alternately coloring it
@@ -386,14 +388,73 @@ void printAlternatingColors(vector<string> strs, vector<COLORS> colors)
 	}
 }
 
-// Returns the size of a broken text
-// considers that the strings have no spaces between their parts
-int getBrokenTextSize(vector<string> strs)
+// Show a centralized visual element (single line)
+// Returns the x used to centralize the text
+int printCentralized(string str, int y)
 {
-	int size = 0;
-	for(string s: strs)
-		size += s.size();
-		
-	return size;
+	int x = getPosToCenter(str.size());
+	gotoxy(x, y);
+	cout << str;
+	
+	return x;
 }
 
+// Show a centralized visual element (multiple lines)
+// Uses the size of the first item in the vector as a base
+// Returns the x used to centralize the text or -1 if the vector is empty
+int printCentralized(vector<string> strs, int y)
+{
+	int x = -1;
+	
+	if(!strs.empty())
+	{
+		x = getPosToCenter(strs.at(0).size());
+		
+		for(int i = 0; i < strs.size(); i++)
+		{
+			gotoxy(x, y + i);
+			cout << strs.at(i);
+		}
+	}
+	
+	return x;
+}
+
+// Show a centralized visual element (single lines), alternately coloring it
+// Uses the size of the first item in the vector as a base
+// Returns the x used to centralize the text or -1 if the vector is empty
+int printCentralizedAndAlternatingColors(vector<string> strs, vector<COLORS> colors, int y)
+{
+	int x = -1;
+	
+	if(!strs.empty())
+	{
+		x = getPosToCenter(getBrokenTextSize(strs));
+		
+		gotoxy(x, y);
+		printAlternatingColors(strs, colors);
+	}
+	
+	return x;
+}
+
+// Show a centralized visual element (multiple lines), alternately coloring it
+// Uses the size of the first item in the vector as a base
+// Returns the x used to centralize the text or -1 if the vector is empty
+int printCentralizedAndAlternatingColors(vector<vector<string>> strs, vector<COLORS> colors, int y)
+{
+	int x = -1;
+	
+	if(!strs.empty())
+	{
+		x = getPosToCenter(getBrokenTextSize(strs.at(0)));
+		
+		for(int i = 0; i < strs.size(); i++)
+		{
+			gotoxy(x, y + i);
+			printAlternatingColors(strs.at(i), colors);
+		}
+	}
+	
+	return x;
+}
