@@ -180,6 +180,11 @@ int getScore(string line)
 	return stoi(line.substr(line.find('-') + 1));
 }
 
+/*int removeIfEquals(int score)
+{
+	
+}*/
+
 // Returns the score position in the ranking
 int getRanking(int score)
 {
@@ -187,13 +192,13 @@ int getRanking(int score)
 	string line;
 	int ranking = 0;
 	
-	ifstream outFile("score.txt");
+	ifstream outFile(SCORE_FILE_NAME);
 	if(outFile.is_open())
 	{
 		while(getline(outFile, line))
 		{
-			if(score < getScore(line))
-				return ranking;
+			if(score > getScore(line))
+				break;
 			
 			ranking++;
 		}
@@ -204,67 +209,62 @@ int getRanking(int score)
 	return ranking;
 }
 
+vector<Player*> getPlayersInRanking()
+{
+	vector<Player*> players;
+	
+	// Read score file
+	string line;
+	int i = 1;
+	
+	ifstream outFile(SCORE_FILE_NAME);
+	if(outFile.is_open())
+	{
+		while(getline(outFile, line))
+		{
+			int divisor = line.find("-");
+			
+			string name = line.substr(0, divisor - 1);
+			int score = stoi(line.substr(divisor + 1));
+			
+			for(Patent *p: patents)
+				if(p->isInRange(score))
+				{
+					players.push_back(new Player(name, score, p));
+					break;
+				}
+		}
+		
+		outFile.close();
+	}
+	
+	return players;
+}
+
 // Saves the player score in the document
 void saveScore(string name, int score, int ranking)
 {
-	// Read score file
-	string line;
-	ifstream outFile("score.txt");
-	if(outFile.is_open())
+	vector<Player*> players = getPlayersInRanking();
+	
+	// Write in score file
+	ofstream inFile(SCORE_FILE_NAME);
+	bool empty = true;
+	bool inserted = false;
+	for(int i = 0; i < players.size(); i++)
 	{
-		while(getline(outFile, line))
+		empty = false;
+			
+		if(i == ranking)
 		{
-			cout << line << '\n';
+			inFile << name << " - " << score << "\n";
+			inserted = true;
 		}
 		
-		outFile.close();
+		inFile << players.at(i)->getName() << " - " << players.at(i)->getScore() << "\n";
 	}
 	
-	waitKey(KEY_ENTER);
-	
-	/*
-	// Read score file
-	string line;
-	int i = 0;
-	
-	ifstream outFile("score.txt");
-	ofstream inFile("score.txt");
-	
-	if(outFile.is_open())
-	{
-		bool empty = true;
-		
-		while(getline(outFile, line))
-		{
-			cout << "a";
-			
-			empty = false;
-			
-			if(i != ranking)
-				inFile << line;
-			else
-				inFile << name << " - " << score;
-			
-			i++;
-		}
-			
-		if(empty)
-			inFile << name << " - " << score;
-		
-		//inFile << "TESTE";
-		
-		outFile.close();
-		inFile.close();
-	}
-	*/
-	
-	/*
-	// Write score file
-	ofstream inFile;
-	inFile.open("score.txt");
-	inFile << name << " - " << score;
-	inFile.close();
-	*/
+	if(empty || !inserted)
+		inFile << name << " - " << score << "\n";
 }
 
 

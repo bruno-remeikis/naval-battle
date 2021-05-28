@@ -1,5 +1,3 @@
-using namespace std;
-
 // CLASSES
 
 class Embarcacao;

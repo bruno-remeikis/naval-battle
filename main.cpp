@@ -28,12 +28,14 @@
 #define GAME_WIDTH 20
 #define GAME_HEIGHT 15
 
-// FILES
-
-#include "classes.cpp"
-#include "utils.cpp"
-
 using namespace std;
+
+
+
+
+
+// CLASSES
+#include "classes.cpp"
 
 
 
@@ -68,6 +70,15 @@ Patent *patents[] = {
 	new Patent("Almirante" , LIGHTRED , 217, 280 ),
 	new Patent("Pirata"    , MAGENTA  , 281, Patent::infinite),
 };
+
+const string SCORE_FILE_NAME = "score.txt";
+
+
+
+
+
+// UTIL FUNCTIONS
+#include "utils.cpp"
 
 
 
@@ -189,9 +200,7 @@ void victory(int score)
 	}
 	
 	// Save score to file
-	cout << "Saving score...";
 	saveScore(name, score, ranking);
-	cout << "...End";
 	
 	// Back
 	printCentralizedAndAlternatingColors(
@@ -712,30 +721,6 @@ void game()
 	}
 }
 
-/*
-void backToMenuText(int y)
-{
-	// Back text
-	textcolor(LIGHTMAGENTA);
-	vector<string> strs = {
-		"Aperte ",
-		"ENTER ",
-		"para ir ao menú principal"
-	};
-	
-	string str = "";
-	for(string s: strs)
-		str += s;
-	int x = getPosToCenter(str.size());
-	
-	gotoxy(x, y);
-	printAlternatingColors(strs, {WHITE, LIGHTMAGENTA});
-
-	
-	waitKey(KEY_ENTER);
-}
-*/
-
 // Instruções
 void instructions()
 {
@@ -855,32 +840,7 @@ void ranking()
 {
 	system("cls");
 	
-	// Read score file
-	string line;
-	int i = 1;
-	
-	vector<Player*> players;
-	
-	ifstream outFile("score.txt");
-	if(outFile.is_open())
-	{
-		while(getline(outFile, line))
-		{
-			int divisor = line.find("-");
-			
-			string name = line.substr(0, divisor - 1);
-			int score = stoi(line.substr(divisor + 1));
-			
-			for(Patent *p: patents)
-				if(p->isInRange(score))
-				{
-					players.push_back(new Player(name, score, p));
-					break;
-				}
-		}
-		
-		outFile.close();
-	}
+	vector<Player*> players = getPlayersInRanking();
 	
 	// Loop to get out of 'rankingInfo()'
 	while(true)
