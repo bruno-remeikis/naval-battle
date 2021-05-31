@@ -223,13 +223,27 @@ class Player
 	private:
 		string name;
 		int score;
-		Patent *patent;
+		int ranking = -1;
+		Patent *patent = nullptr;
 	public:
-		Player(string name, int score, Patent *patent)
+		Player(string name, int score, int ranking, Patent *patent)
 		{
 			this->name = name;
 			this->score = score;
+			this->ranking = ranking;
 			this->patent = patent;
+		}
+		
+		Player(string name, int score)
+		{
+			this->name = name;
+			this->score = score;
+		}
+		
+		Player(int score, int ranking)
+		{
+			this->score = score;
+			this->ranking = ranking;
 		}
 		
 		string getName()
@@ -240,6 +254,11 @@ class Player
 		int getScore()
 		{
 			return score;
+		}
+		
+		int getRanking()
+		{
+			return ranking;
 		}
 		
 		Patent* getPatent()

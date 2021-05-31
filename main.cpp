@@ -86,10 +86,14 @@ const string SCORE_FILE_NAME = "score.txt";
 
 // INTERFACE FUNCTIONS
 
+/*todo:
+mostrar tela de vitória sem o ranking (pois n dá pra saber o ranking caso o nome de jogador a ser digitado já exista)
+verificar se nome já existe e se score átual é maior (se sim, apaga do documento, pois, assim, o jogador será reinserido)*/
+
 // Victory
 void victory(int score)
 {
-	int ranking = getRanking(score);
+	//int ranking = getRanking(score);
 	
 	system("cls");
 	
@@ -112,20 +116,6 @@ void victory(int score)
 		"     |_______|       "
 	}, 4);
 	
-	// Ranking text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Ranking",
-		wherey() + 2
-	);
-	
-	// Ranking value
-	textcolor(WHITE);
-	printCentralized(
-		to_string(ranking),
-		wherey() + 1
-	);
-	
 	// Score text
 	textcolor(LIGHTMAGENTA);
 	printCentralized(
@@ -137,6 +127,15 @@ void victory(int score)
 	textcolor(WHITE);
 	printCentralized(
 		to_string(score),
+		wherey() + 1
+	);
+	
+	// Patent value
+	Patent *p = getPatent(score);
+	
+	textcolor(p->getColor());
+	printCentralized(
+		"(" + p->getName() + ")",
 		wherey() + 1
 	);
 	
@@ -199,14 +198,47 @@ void victory(int score)
 		}
 	}
 	
+	// Remove duplicate player
+	Player *old = removePlayer(name, score);
 	// Save score to file
-	saveScore(name, score, ranking);
+	int ranking = saveScore(name, score);
+	
+	// Ranking text
+	textcolor(LIGHTMAGENTA);
+	printCentralized(
+		"Ranking",
+		y + 2
+	);
+	
+	// Ranking value
+	textcolor(WHITE);
+	printCentralized(
+		to_string(ranking) + "° lugar",
+		wherey() + 1
+	);
+	
+	if(old != nullptr && old->getScore() < score)
+	{
+		// Ranking value
+		textcolor(YELLOW);
+		printCentralized(
+			"NEW RECORD!",
+			wherey() + 1
+		);
+		
+		// Ranking value
+		textcolor(YELLOW);
+		printCentralized(
+			"Old score: " + to_string(old->getScore()),
+			wherey() + 1
+		);
+	}
 	
 	// Back
 	printCentralizedAndAlternatingColors(
 		{"Aperte ", "ENTER ", "para ir ao menú principal"},
 		{WHITE, LIGHTMAGENTA},
-		y + 4
+		wherey() + 2
 	);
 	hideCursor();
 	waitKey(KEY_ENTER);
@@ -840,6 +872,7 @@ void ranking()
 {
 	system("cls");
 	
+	
 	vector<Player*> players = getPlayersInRanking();
 	
 	// Loop to get out of 'rankingInfo()'
@@ -930,6 +963,15 @@ int main()
 	
 	// Variables
 	int opt = 0;
+	
+	while(true)
+	{
+		system("cls");
+		cout << "\n Score: ";
+		int score;
+		cin >> score;
+		victory(score);
+	}
 	
 	// Main loop
 	while(true)

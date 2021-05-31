@@ -173,6 +173,17 @@ list<Embarcacao*> gerarEmbarcacoes(Peca (&field)[rows][cols], Tipo *tipoAtual)
 	return ships;
 }
 
+void savePlayers(vector<Player*> players)
+{
+	// Write in score file
+	ofstream inFile(SCORE_FILE_NAME);
+	
+	for(Player *p: players)
+		inFile << p->getName() << " - " << p->getScore() << "\n";
+		
+	inFile.close();
+}
+
 // Returns the score cut from a line
 int getScore(string line)
 {
@@ -180,33 +191,13 @@ int getScore(string line)
 	return stoi(line.substr(line.find('-') + 1));
 }
 
-/*int removeIfEquals(int score)
+Patent* getPatent(int score)
 {
-	
-}*/
-
-// Returns the score position in the ranking
-int getRanking(int score)
-{
-	// Read score file
-	string line;
-	int ranking = 0;
-	
-	ifstream outFile(SCORE_FILE_NAME);
-	if(outFile.is_open())
-	{
-		while(getline(outFile, line))
-		{
-			if(score > getScore(line))
-				break;
-			
-			ranking++;
-		}
+	for(Patent *p: patents)
+		if(p->isInRange(score))
+			return p;
 		
-		outFile.close();
-	}
-	
-	return ranking;
+	return nullptr;
 }
 
 vector<Player*> getPlayersInRanking()
@@ -227,12 +218,7 @@ vector<Player*> getPlayersInRanking()
 			string name = line.substr(0, divisor - 1);
 			int score = stoi(line.substr(divisor + 1));
 			
-			for(Patent *p: patents)
-				if(p->isInRange(score))
-				{
-					players.push_back(new Player(name, score, p));
-					break;
-				}
+			players.push_back(new Player(name, score, i, getPatent(score)));
 		}
 		
 		outFile.close();
@@ -241,30 +227,68 @@ vector<Player*> getPlayersInRanking()
 	return players;
 }
 
-// Saves the player score in the document
-void saveScore(string name, int score, int ranking)
+// remove player if his name already exists in the ranking
+Player* removePlayer(string name, int score)
 {
 	vector<Player*> players = getPlayersInRanking();
 	
-	// Write in score file
-	ofstream inFile(SCORE_FILE_NAME);
-	bool empty = true;
-	bool inserted = false;
 	for(int i = 0; i < players.size(); i++)
 	{
-		empty = false;
-			
-		if(i == ranking)
+		Player* p = players.at(i);
+		
+		if(p->getName() == name)
 		{
-			inFile << name << " - " << score << "\n";
+			if(p->getScore() < score)
+			{
+				players.erase(players.begin() + i); // <- Remove player from vector
+				savePlayers(players); // <- Update file content
+			}
+			
+			return new Player(p->getScore(), i + 1);
+		}
+	}
+}
+
+// Saves the player score in the document
+// Returns the rankin of the current player
+int saveScore(string name, int score)
+{
+	vector<Player*> players = getPlayersInRanking();
+	
+	Player *newP = new Player(name, score);
+	int ranking = 1;
+	
+	bool inserted = false;
+	bool nameFounded = false;
+	for(int i = 0; i < players.size(); i++)
+	{
+		Player *p = players.at(i);
+		
+		if(p->getName() == name)
+		{
+			nameFounded = true;
+		}
+		else if(score > p->getScore() && !inserted && !nameFounded)
+		{
+			vector<Player*>::iterator it = (players.begin() + i);
+			players.insert(it, newP);
+			
 			inserted = true;
 		}
 		
-		inFile << players.at(i)->getName() << " - " << players.at(i)->getScore() << "\n";
+		ranking++;
 	}
 	
-	if(empty || !inserted)
-		inFile << name << " - " << score << "\n";
+	if(players.empty() || (!inserted && !nameFounded))
+	{
+		players.push_back(newP);
+		inserted = true;
+	}
+	
+	if(inserted)
+		savePlayers(players);
+		
+	return ranking;
 }
 
 
