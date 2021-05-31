@@ -28,6 +28,8 @@
 #define GAME_WIDTH 20
 #define GAME_HEIGHT 15
 
+#define NAME_SIZE 5
+
 using namespace std;
 
 
@@ -828,29 +830,44 @@ void ranking()
 			""
 		}, wherey() + 2);
 		
+		COLORS colors[] = {YELLOW, LIGHTGRAY, BROWN};
 		int x;
 		for(int i = 0; i < players.size() && i < 3; i++)
 		{
 			Player *p = players.at(i);
 			
-			string txt = to_string(i + 1) + "° - " + p->getName() + " - " + to_string(p->getScore());
+			vector<string> txt = {
+				to_string(i + 1) + "°: ",
+				p->getName(),
+				" (" + to_string(p->getScore()) + " pontos)"
+			};
+			
 			if(i == 0)
-				x = getPosToCenter(txt.size());
+				x = getPosToCenter(getBrokenTextSize(txt));
 			
 			gotoxy(x, wherey() + 1);
-			textcolor(p->getPatent()->getColor());
-			cout << txt;
+			printAlternatingColors(
+				txt,
+				{colors[i], p->getPatent()->getColor(), WHITE}
+			);
 		}
 		
 		textcolor(WHITE);
 		for(int i = players.size() + 1; i <= 3; i++)
 		{
-			string txt = to_string(i) + "° - .... - ?";
+			vector<string> txt = {
+				to_string(i) + "°: ",
+				"Vazio"
+			};
+			
 			if(i == 0)
 				x = getPosToCenter(txt.size());
 				
 			gotoxy(x, wherey() + 1);
-			cout << txt;
+			printAlternatingColors(
+				txt,
+				{colors[i - 1], WHITE}
+			);
 		}
 		
 		textcolor(LIGHTRED);
@@ -898,8 +915,6 @@ int main()
 	
 	// Variables
 	int opt = 0;
-	
-	defeat();
 	
 	// Main loop
 	while(true)

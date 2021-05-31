@@ -486,7 +486,7 @@ int printCentralizedAndAlternatingColors(vector<vector<string>> strs, vector<COL
 }
 
 // Show a name input box
-// Returns a player name
+// Returns a player name with NAME_SIZE size or an empty string if the function is canceled
 string getName()
 {
 	// Player name text
@@ -496,22 +496,27 @@ string getName()
 		wherey() + 2
 	);
 	
+	string line = "---";
+	for(int i = 0; i < NAME_SIZE; i++)
+		line += "--";
+	
 	// Player name value
 	textcolor(WHITE);
-	string str =  "-----------";
-	int x = getPosToCenter(str.size());
+	int x = getPosToCenter(line.size());
 	
 	gotoxy(x, wherey() + 1);
-	cout << str;
+	cout << line;
 	
 	gotoxy(x, wherey() + 1);
 	cout << "| ";
 	int xName = wherex();
 	int yName = wherey();
-	cout << ". . . . |";
+	for(int i = 0; i < NAME_SIZE; i++)
+		cout << ". ";
+	cout << "|";
 	
 	gotoxy(x, wherey() + 1);
-	cout << "-----------";
+	cout << line;
 	
 	// Player name input
 	string name = "";
@@ -524,7 +529,7 @@ string getName()
 		if(((c >= 48 && c <= 57)   // <- Number
 		||  (c >= 65 && c <= 90)   // <- Uppercase
 		||  (c >= 97 && c <= 122)) // <- Lowercase
-		&& name.size() < 4) 
+		&& name.size() < NAME_SIZE) 
 		{
 			name += (char) c;
 			
@@ -540,7 +545,7 @@ string getName()
 			name.pop_back();
 		}
 		// Continue
-		else if(c == KEY_ENTER && name.size() == 4)
+		else if(c == KEY_ENTER && name.size() == NAME_SIZE)
 		{
 			return name;
 		}
