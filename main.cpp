@@ -55,7 +55,7 @@ COLORS const AGUA_COLOR = LIGHTBLUE;
 
 // Tipos pré-definidos
 Tipo *tipos[] = {
-	new Tipo("Submarino"   , 3, 1, '1', LIGHTCYAN),
+	new Tipo("Submarino"   , 1, 1, '1', LIGHTCYAN),
 	new Tipo("Encouraçado" , 2, 2, '2', GREEN    ),
 	new Tipo("Cruzador"    , 3, 3, '3', DARKGRAY ),
 	new Tipo("Hidroavião"  , 4, 1, '4', LIGHTRED ),
@@ -64,10 +64,10 @@ Tipo *tipos[] = {
 
 // Patentes pré-definidas
 Patent *patents[] = {
-	new Patent("Marinheiro", YELLOW   , 0  , 88  ),
-	new Patent("Tenente"   , GREEN    , 89 , 152 ),
-	new Patent("Capitão"   , LIGHTBLUE, 153, 216 ),
-	new Patent("Almirante" , LIGHTRED , 217, 280 ),
+	new Patent("Marinheiro", YELLOW   , 0  , 88 ),
+	new Patent("Tenente"   , GREEN    , 89 , 152),
+	new Patent("Capitão"   , LIGHTBLUE, 153, 216),
+	new Patent("Almirante" , LIGHTRED , 217, 280),
 	new Patent("Pirata"    , MAGENTA  , 281, Patent::infinite),
 };
 
@@ -86,16 +86,15 @@ const string SCORE_FILE_NAME = "score.txt";
 
 // INTERFACE FUNCTIONS
 
-/*todo:
-mostrar tela de vitória sem o ranking (pois n dá pra saber o ranking caso o nome de jogador a ser digitado já exista)
-verificar se nome já existe e se score átual é maior (se sim, apaga do documento, pois, assim, o jogador será reinserido)*/
-
 // Victory
-void victory(int score)
+void victory(string name, int score)
 {
-	//int ranking = getRanking(score);
-	
 	system("cls");
+	
+	// Remove duplicate player
+	Player *old = removePlayer(name, score);
+	// Save score to file
+	int ranking = saveScore(name, score);
 	
 	// Trophy
 	textcolor(YELLOW);
@@ -116,129 +115,59 @@ void victory(int score)
 		"     |_______|       "
 	}, 4);
 	
-	// Score text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Score",
-		wherey() + 2
-	);
+	// New record
+	string scoreDiff = "";
+	COLORS scoreDiffColor;
+	if(old != nullptr)
+	{
+		if(old->getScore() <= score)
+		{
+			// Score text
+			textcolor(LIGHTMAGENTA);
+			printCentralized(
+				"NOVO RECORDE!",
+				wherey() + 2
+			);
+			
+			scoreDiff = "(+" + to_string(score - old->getScore()) + ")";
+			scoreDiffColor = LIGHTGREEN;
+		}
+		else
+		{
+			scoreDiff = "(-" + to_string(old->getScore() - score) + ")";
+			scoreDiffColor = LIGHTRED;
+		}
+	}
 	
-	// Score value
-	textcolor(WHITE);
-	printCentralized(
-		to_string(score),
-		wherey() + 1
-	);
-	
-	// Patent value
+	// Patent
 	Patent *p = getPatent(score);
 	
 	textcolor(p->getColor());
 	printCentralized(
 		"(" + p->getName() + ")",
-		wherey() + 1
-	);
-	
-	// Player name text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Nome de jogador",
 		wherey() + 2
 	);
 	
-	// Player name value
-	textcolor(WHITE);
-	string str =  "-----------";
-	int x = getPosToCenter(str.size());
-	
-	gotoxy(x, wherey() + 1);
-	cout << str;
-	
-	gotoxy(x, wherey() + 1);
-	cout << "| ";
-	int xName = wherex();
-	int yName = wherey();
-	cout << ". . . . |";
-	
-	gotoxy(x, wherey() + 1);
-	cout << "-----------";
-	
-	int y = wherey();
-	
-	// Player name input
-	string name = "";
-	while(true)
-	{
-		hideCursor();
-		
-		int c = getch();
-		
-		if(((c >= 48 && c <= 57)   // <- Number
-		||  (c >= 65 && c <= 90)   // <- Uppercase
-		||  (c >= 97 && c <= 122)) // <- Lowercase
-		&& name.size() < 4) 
-		{
-			name += (char) c;
-			
-			gotoxy(xName + (name.size() - 1) * 2, yName);
-			cout << (char) c;
-		}
-		// Delete
-		else if(c == KEY_BACKSPACE && name.size() > 0)
-		{
-			gotoxy(xName + (name.size() - 1) * 2, yName);
-			cout << ".";
-			
-			name.pop_back();
-		}
-		// Continue
-		else if(c == KEY_ENTER && name.size() == 4)
-		{
-			break;
-		}
-	}
-	
-	// Remove duplicate player
-	Player *old = removePlayer(name, score);
-	// Save score to file
-	int ranking = saveScore(name, score);
-	
-	// Ranking text
-	textcolor(LIGHTMAGENTA);
-	printCentralized(
-		"Ranking",
-		y + 2
-	);
-	
-	// Ranking value
+	// Ranking
 	textcolor(WHITE);
 	printCentralized(
 		to_string(ranking) + "° lugar",
 		wherey() + 1
 	);
 	
-	if(old != nullptr && old->getScore() < score)
-	{
-		// Ranking value
-		textcolor(YELLOW);
-		printCentralized(
-			"NEW RECORD!",
-			wherey() + 1
-		);
-		
-		// Ranking value
-		textcolor(YELLOW);
-		printCentralized(
-			"Old score: " + to_string(old->getScore()),
-			wherey() + 1
-		);
-	}
+	// Score
+	textcolor(WHITE);
+	printCentralizedAndAlternatingColors(
+		{to_string(score) + " pontos ", scoreDiff},
+		{WHITE, scoreDiffColor},
+		wherey() + 1
+	);
 	
 	// Back
 	printCentralizedAndAlternatingColors(
 		{"Aperte ", "ENTER ", "para ir ao menú principal"},
 		{WHITE, LIGHTMAGENTA},
-		wherey() + 2
+		wherey() + 4
 	);
 	hideCursor();
 	waitKey(KEY_ENTER);
@@ -271,6 +200,12 @@ void defeat()
 // Jogo
 void game()
 {
+	string name = getName();
+	if(name.empty())
+		return;
+		
+	system("cls");
+	
 	// Matriz do jogo
 	Peca field[GAME_WIDTH][GAME_HEIGHT];
 	
@@ -641,7 +576,7 @@ void game()
 								// Check if the game is over
 								if(shipsNotSunk.empty())
 								{
-									victory(200);
+									victory(name, 200);
 									return;
 								}
 								
@@ -964,14 +899,7 @@ int main()
 	// Variables
 	int opt = 0;
 	
-	while(true)
-	{
-		system("cls");
-		cout << "\n Score: ";
-		int score;
-		cin >> score;
-		victory(score);
-	}
+	defeat();
 	
 	// Main loop
 	while(true)

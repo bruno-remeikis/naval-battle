@@ -247,6 +247,8 @@ Player* removePlayer(string name, int score)
 			return new Player(p->getScore(), i + 1);
 		}
 	}
+	
+	return nullptr;
 }
 
 // Saves the player score in the document
@@ -275,8 +277,8 @@ int saveScore(string name, int score)
 			
 			inserted = true;
 		}
-		
-		ranking++;
+		else
+			ranking++;
 	}
 	
 	if(players.empty() || (!inserted && !nameFounded))
@@ -481,4 +483,70 @@ int printCentralizedAndAlternatingColors(vector<vector<string>> strs, vector<COL
 	}
 	
 	return x;
+}
+
+// Show a name input box
+// Returns a player name
+string getName()
+{
+	// Player name text
+	textcolor(LIGHTMAGENTA);
+	printCentralized(
+		"Nome de jogador",
+		wherey() + 2
+	);
+	
+	// Player name value
+	textcolor(WHITE);
+	string str =  "-----------";
+	int x = getPosToCenter(str.size());
+	
+	gotoxy(x, wherey() + 1);
+	cout << str;
+	
+	gotoxy(x, wherey() + 1);
+	cout << "| ";
+	int xName = wherex();
+	int yName = wherey();
+	cout << ". . . . |";
+	
+	gotoxy(x, wherey() + 1);
+	cout << "-----------";
+	
+	// Player name input
+	string name = "";
+	while(true)
+	{
+		hideCursor();
+		
+		int c = getch();
+		
+		if(((c >= 48 && c <= 57)   // <- Number
+		||  (c >= 65 && c <= 90)   // <- Uppercase
+		||  (c >= 97 && c <= 122)) // <- Lowercase
+		&& name.size() < 4) 
+		{
+			name += (char) c;
+			
+			gotoxy(xName + (name.size() - 1) * 2, yName);
+			cout << (char) c;
+		}
+		// Delete
+		else if(c == KEY_BACKSPACE && name.size() > 0)
+		{
+			gotoxy(xName + (name.size() - 1) * 2, yName);
+			cout << ".";
+			
+			name.pop_back();
+		}
+		// Continue
+		else if(c == KEY_ENTER && name.size() == 4)
+		{
+			return name;
+		}
+		else if(c == KEY_ESC)
+		{
+			return "";
+		}
+	}
 }
