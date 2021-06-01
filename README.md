@@ -9,12 +9,15 @@ A c++ naval battle that runs at the command prompt.
 2. Compile the `main.cpp` file
 
 ## Demonstration
+- Basic flow
 ![Main gif](naval-battle-main.gif)
 
 <br />
 
+- Victory view
 ![Victory image](img-victory.png)
 
 <br />
 
+- Defeat view
 ![Defeat image](img-defeat.png)
