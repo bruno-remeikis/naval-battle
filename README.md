@@ -8,4 +8,13 @@ A c++ naval battle that runs at the command prompt.
 1. Clone this repo using `git clone https://github.com/bruno-remeikis/naval-battle.git`
 2. Compile the `main.cpp` file
 
+## Demonstration
 ![Main gif](naval-battle-main.gif)
+
+<br />
+
+![Victory image](img-victory.png)
+
+<br />
+
+![Defeat image](img-defeat.png)
