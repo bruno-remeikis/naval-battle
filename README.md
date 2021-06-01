@@ -11,16 +11,19 @@ A c++ naval battle that runs at the command prompt.
 ## Demonstration
 - Basic flow
 <br />
+
 ![Main gif](naval-battle-main.gif)
 
 <br />
 
 - Victory view
 <br />
+
 ![Victory image](img-victory.png)
 
 <br />
 
 - Defeat view
 <br />
+
 ![Defeat image](img-defeat.png)
