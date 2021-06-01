@@ -7,3 +7,5 @@ A c++ naval battle that runs at the command prompt.
 ## Getting started
 1. Clone this repo using `git clone https://github.com/bruno-remeikis/naval-battle.git`
 2. Compile the `main.cpp` file
+
+![](naval-battle-main.git)
