@@ -305,17 +305,21 @@ void hideCursor()
 	gotoxy(1, 1);
 }
 
+// Creates a menu
+// returns the index of the selected option (starting at 0) or -1 if ESC was pressed
 int menu(string title, vector<string> options, int opt)
 {
+	const int EXTRA = 2;
+	
 	// CONSTRUIR MENÚ
 	int biggerTxt = title.size();
 	
 	for(string option: options)
-		if(option.size() + 4 > biggerTxt)
-			biggerTxt = option.size() + 4;
+		if(option.size() + 2 > biggerTxt)
+			biggerTxt = option.size() + 2;
 			
 	string border = "----";
-	for(int i = 0; i < biggerTxt; i++)
+	for(int i = 0; i < biggerTxt + EXTRA; i++)
 		border += "-";
 	border += "\n";
 	
@@ -332,10 +336,10 @@ int menu(string title, vector<string> options, int opt)
 	const int initX = wherex() + 1;
 	const int initY = wherey() + 2;
 	
-	gotoxy(x + border.size() / 2 - title.size() / 2, wherey()); // <- Centralizar título
+	gotoxy(x + (border.size() - 1) / 2 - title.size() / 2, wherey()); // <- Centralizar título
 	textcolor(LIGHTMAGENTA);
 	cout << title;
-	gotoxy(x + biggerTxt + 3, wherey());
+	gotoxy(x + biggerTxt + EXTRA + 3, wherey());
 	textcolor(WHITE);
 	cout << "|\n";
 	
@@ -346,7 +350,7 @@ int menu(string title, vector<string> options, int opt)
 	{
 		gotoxy(x, wherey());
 		cout << "|   " << option;
-		gotoxy(x + biggerTxt + 3, wherey());
+		gotoxy(x + biggerTxt + EXTRA + 3, wherey());
 		cout << "|\n";
 	}
 	
@@ -380,6 +384,9 @@ int menu(string title, vector<string> options, int opt)
 			case KEY_ENTER:
 			    choosing = false;
 			    break;
+			// ESC
+			case KEY_ESC:
+				return -1;
 		}
 		
 		gotoxy(initX, initY + opt);
@@ -493,7 +500,7 @@ string getName()
 	textcolor(LIGHTMAGENTA);
 	printCentralized(
 		"Nome de jogador",
-		wherey() + 2
+		wherey() + 1
 	);
 	
 	string line = "---";

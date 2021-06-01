@@ -12,6 +12,7 @@
 #include <ctime>	 // <- Use time in random numbers
 #include <windows.h>
 #include <fstream> 	 // <- Write and read files
+//#include <math.h>	 // <- Use math functions
 
 // CONSTANTS
 
@@ -202,11 +203,29 @@ void defeat()
 // Jogo
 void game()
 {
-	string name = getName();
-	if(name.empty())
-		return;
+	int difficulty = 0;
+	string name = "";
+	while(true)
+	{
+		system("cls");
+		gotoxy(1, 9);
+		difficulty = menu("Dificuldade", {
+			"Fácil",
+			"Normal",
+			"Difícil"
+		}, difficulty);
 		
-	system("cls");
+		// Back to main menu
+		if(difficulty == -1)
+			return;
+		
+		// Back to difficulty menu
+		system("cls");
+		gotoxy(1, 9);
+		name = getName();
+		if(!name.empty())
+			break;
+	}
 	
 	// Matriz do jogo
 	Peca field[GAME_WIDTH][GAME_HEIGHT];
@@ -215,7 +234,8 @@ void game()
 	list<Embarcacao*> shipsNotSunk;
 
 	// Tiros
-	int tiros = 500;
+	int diffs[] = {200, 100, 50};
+	int tiros = diffs[difficulty];
 	int inWater = 0;
 	
 	// GERAR EMBARCAÇÕES
@@ -234,31 +254,6 @@ void game()
 	while(true)
 	{
 		system("cls");
-		
-		/*
-		// PRINTAR CAMPO (Revelar tudo)
-		for(int j = 0; j < GAME_HEIGHT; j++)
-		{
-			cout << "\n";
-			
-			for(int i = 0; i < GAME_WIDTH; i++)
-			{
-				Peca *peca = &field[i][j];
-				
-				if(peca->isWater())
-				{
-					textcolor(AGUA_COLOR);
-					cout << " " << AGUA_CHAR;
-				}
-				else
-				{
-					textcolor(peca->getEmbarcacao()->getTipo()->getColor());
-					cout << " " << peca->getEmbarcacao()->getTipo()->getCharacter();
-				}
-			}
-		}
-		cout << "\n\n";
-		*/
 		
 		// TIROS RESTANTES
 		textcolor(WHITE);
